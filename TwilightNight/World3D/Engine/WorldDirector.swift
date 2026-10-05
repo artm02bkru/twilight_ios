@@ -7,6 +7,8 @@ import SwiftUI
 final class WorldDirector: ObservableObject {
 
     let view: SCNView
+    /// Нужная площадка ещё строится — игра ждёт, на экране индикатор.
+    @Published private(set) var isLoading = false
 
     private var stages: [StageID: Stage3D] = [:]
     private var building: Set<StageID> = []
@@ -62,12 +64,18 @@ final class WorldDirector: ObservableObject {
         }
     }
 
+    func isReady(_ id: StageID) -> Bool { stages[id] != nil }
+
     // MARK: - Кадр
 
     func tick(_ engine: GameEngine, dt: CGFloat) {
         let id = engine.stageID
         // Площадка ещё строится — остаёмся на прежней.
-        guard let stage = request(id) else { return }
+        guard let stage = request(id) else {
+            if !isLoading { isLoading = true }
+            return
+        }
+        if isLoading { isLoading = false }
 
         if current != id {
             current = id

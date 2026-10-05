@@ -22,6 +22,8 @@ class Stage3D {
     private(set) var fov: Float = 60
     /// 0...1 — тряска (удар, гром, потеря контроля).
     var shake: Float = 0
+    /// Лёгкое «дыхание» ручной камеры в кат-сценах.
+    private var handheld: Float = 0
 
     // MARK: - Сборка
 
@@ -189,6 +191,7 @@ class Stage3D {
     func setCinematic(_ on: Bool, fStop: CGFloat = 2.2) {
         cameraSettings.wantsDepthOfField = on
         cameraSettings.fStop = fStop
+        handheld = on ? 1 : 0
     }
 
     /// Записать состояние камеры в узел. Вызывается директором в конце кадра.
@@ -199,8 +202,15 @@ class Stage3D {
             let a = shake * shake * 0.12
             e += V3(sin(time * 61) * a, sin(time * 47 + 1.3) * a, sin(time * 53 + 2.1) * a * 0.5)
         }
+        // Оператор с камерой на плече: медленный дрейф в пару сантиметров.
+        var t = target
+        if handheld > 0 {
+            let d = simd_length(target - eye)
+            e += V3(sin(time * 0.71) * 0.012, sin(time * 0.53 + 0.8) * 0.009, 0) * handheld
+            t += V3(sin(time * 0.43 + 2.1), sin(time * 0.61 + 0.3), 0) * (0.0025 * d * handheld)
+        }
         camera.simdPosition = e
-        camera.simdLook(at: target)
+        camera.simdLook(at: t)
         cameraSettings.fieldOfView = CGFloat(fov)
         cameraSettings.focusDistance = CGFloat(simd_length(target - eye))
     }

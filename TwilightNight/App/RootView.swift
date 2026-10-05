@@ -48,12 +48,20 @@ struct RootView: View {
                 }
 
                 overlay
+
+                if director.isLoading && engine.phase != .menu {
+                    LoadingBadge()
+                        .transition(.opacity)
+                }
             }
             .onAppear {
                 music.start()
                 engine.setAspect(w / h)
                 clock.onTick = { delta in
-                    engine.update(dt: delta)
+                    // Пока площадка строится, история не идёт дальше.
+                    if director.isReady(engine.stageID) {
+                        engine.update(dt: delta)
+                    }
                     director.tick(engine, dt: delta)
                 }
                 clock.start()
@@ -98,6 +106,27 @@ struct RootView: View {
         case .playing:
             EmptyView()
         }
+    }
+}
+
+/// Индикатор построения сцены.
+private struct LoadingBadge: View {
+    var body: some View {
+        VStack {
+            Spacer()
+            HStack(spacing: 10) {
+                ProgressView()
+                    .tint(Theme.ice)
+                Text("Сцена строится…")
+                    .font(Theme.body(14, weight: .semibold))
+                    .foregroundColor(Theme.textDim)
+            }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 12)
+            .background(Capsule().fill(Color.black.opacity(0.6)))
+            .padding(.bottom, 40)
+        }
+        .allowsHitTesting(false)
     }
 }
 
