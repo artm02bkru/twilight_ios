@@ -56,7 +56,7 @@ private struct Scrim<Content: View>: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.62).ignoresSafeArea()
+            Color.black.opacity(0.38).ignoresSafeArea()
             ScrollView(showsIndicators: false) {
                 content
                     .padding(.horizontal, 22)
@@ -150,7 +150,8 @@ struct ChapterCardOverlay: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.80).ignoresSafeArea()
+            LinearGradient(colors: [.clear, Color.black.opacity(0.75)],
+                           startPoint: .top, endPoint: .bottom).ignoresSafeArea()
 
             TwilightPanel {
                 VStack(alignment: .leading, spacing: 16) {
@@ -256,7 +257,7 @@ struct ChapterResultOverlay: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.78).ignoresSafeArea()
+            Color.black.opacity(0.45).ignoresSafeArea()
 
             TwilightPanel {
                 VStack(spacing: 12) {

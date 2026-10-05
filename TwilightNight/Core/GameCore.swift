@@ -40,6 +40,8 @@ struct SceneOutcome {
 /// Фазы всей игры.
 enum GamePhase {
     case menu
+    /// Идёт кат-сцена (пролог, вступление или развязка главы, финал).
+    case cutscene
     case chapterCard
     case playing
     case paused

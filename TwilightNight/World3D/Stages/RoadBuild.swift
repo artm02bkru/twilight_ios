@@ -37,7 +37,7 @@ struct RoadPath {
 
 // MARK: - Мир
 
-enum WorldBuild {
+enum RoadBuild {
 
     static let roadHalfWidth: Float = 8.0
     static let roadShoulder: Float = 20.0
@@ -268,7 +268,10 @@ enum WorldBuild {
     // MARK: Лес
 
     static func forest(path: RoadPath, seed: Int, count: Int, area: Float) -> SCNGeometry {
+        // Шум для расстановки — свой, а высоту берём из того же шума, что и рельеф,
+        // иначе деревья висят в воздухе или тонут в холме.
         let noise = ValueNoise(seed: seed &+ 77)
+        let terrainNoise = ValueNoise(seed: seed)
         let builder = MeshBuilder()
 
         let trunkColor = UIColor(hex: 0x3A2C22)
@@ -285,7 +288,7 @@ enum WorldBuild {
             // гуще у дороги, реже вдали — так честнее для глаза
             if d > 90 && noise.value(Float(attempt) * 0.13, 3.1) < 0.45 { continue }
 
-            let y = groundHeight(x, z, path: path, noise: noise)
+            let y = groundHeight(x, z, path: path, noise: terrainNoise)
             let scale = 0.7 + noise.value(Float(attempt) * 0.53, 8.8) * 0.9
             let height = 13 * scale
             let radius = 3.3 * scale
@@ -313,6 +316,7 @@ enum WorldBuild {
     /// Кусты и камни у обочины.
     static func roadsideDetails(path: RoadPath, seed: Int, count: Int) -> SCNGeometry {
         let noise = ValueNoise(seed: seed &+ 303)
+        let terrainNoise = ValueNoise(seed: seed)
         let builder = MeshBuilder()
         let bush = UIColor(hex: 0x27401F)
         let stone = UIColor(hex: 0x54585A)
@@ -326,7 +330,7 @@ enum WorldBuild {
             let n = SCNVector3(-t.z, 0, t.x).normalized
             let x = cx + n.x * side * offset
             let zz = z + n.z * side * offset
-            let y = groundHeight(x, zz, path: path, noise: noise)
+            let y = groundHeight(x, zz, path: path, noise: terrainNoise)
 
             if noise.value(Float(i) * 0.13, 6.6) > 0.45 {
                 let s = 0.9 + noise.value(Float(i) * 0.23, 7.7) * 1.6

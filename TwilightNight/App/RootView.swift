@@ -1,9 +1,10 @@
 import SwiftUI
 
-/// Корневой экран: сцена + HUD + оверлеи.
+/// Корневой экран: 3D-мир + слой касаний + HUD + оверлеи.
 struct RootView: View {
 
     @StateObject private var engine = GameEngine()
+    @StateObject private var director = WorldDirector()
     @StateObject private var clock = DisplayLinkDriver()
     @ObservedObject private var music = SoundtrackPlayer.shared
     @Environment(\.scenePhase) private var scenePhase
@@ -16,8 +17,11 @@ struct RootView: View {
             ZStack {
                 Color.black
 
-                SceneCanvas(engine: engine)
-                    .offset(x: shakeOffset)
+                WorldView(director: director)
+                    .allowsHitTesting(false)
+
+                // Слой касаний: SCNView касаний не принимает, всё ловится здесь.
+                Color.clear
                     .contentShape(Rectangle())
                     .gesture(
                         DragGesture(minimumDistance: 0)
@@ -35,6 +39,10 @@ struct RootView: View {
                     .opacity(engine.flash * 0.26)
                     .allowsHitTesting(false)
 
+                if engine.phase == .playing {
+                    BannerLayer(engine: engine)
+                }
+
                 if engine.phase == .playing || engine.phase == .paused {
                     HudView(engine: engine)
                 }
@@ -44,7 +52,10 @@ struct RootView: View {
             .onAppear {
                 music.start()
                 engine.setAspect(w / h)
-                clock.onTick = { delta in engine.update(dt: delta) }
+                clock.onTick = { delta in
+                    engine.update(dt: delta)
+                    director.tick(engine, dt: delta)
+                }
                 clock.start()
             }
             .onChange(of: geo.size) { newSize in
@@ -54,7 +65,15 @@ struct RootView: View {
         .ignoresSafeArea()
         .onDisappear { clock.stop() }
         .onChange(of: scenePhase) { phase in
-            if phase == .active { music.resumeIfNeeded() }
+            switch phase {
+            case .active:
+                music.resumeIfNeeded()
+            case .inactive, .background:
+                // Свернули игру — ставим на паузу, чтобы не потерять жизнь.
+                engine.pause()
+            @unknown default:
+                break
+            }
         }
     }
 
@@ -63,6 +82,8 @@ struct RootView: View {
         switch engine.phase {
         case .menu:
             MenuOverlay(engine: engine).transition(.opacity)
+        case .cutscene:
+            CutsceneOverlay(engine: engine).transition(.opacity)
         case .chapterCard:
             ChapterCardOverlay(engine: engine).transition(.opacity)
         case .paused:
@@ -76,12 +97,6 @@ struct RootView: View {
         case .playing:
             EmptyView()
         }
-    }
-
-    private var shakeOffset: CGFloat {
-        let amount = engine.shake
-        guard amount > 0.01 else { return 0 }
-        return sin(engine.time * 54) * 16 * amount
     }
 }
 

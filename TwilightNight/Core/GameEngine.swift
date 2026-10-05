@@ -16,6 +16,8 @@ final class GameEngine: ObservableObject {
     @Published private(set) var chapterScore: Int = 0
     @Published private(set) var result: ChapterResult? = nil
     @Published private(set) var best: Int
+    /// Текущая кат-сцена (только в фазе `.cutscene`).
+    @Published private(set) var cutscene: CutscenePlayback? = nil
 
     static let startLives = 3
     static let maxLives = 5
@@ -72,7 +74,7 @@ final class GameEngine: ObservableObject {
         pendingTap = nil
         lightHaptics.prepare()
         heavyHaptics.prepare()
-        phase = .chapterCard
+        playCutscene(.prologue)
     }
 
     /// Игрок нажал «начать главу» на карточке.
@@ -95,16 +97,92 @@ final class GameEngine: ObservableObject {
 
     /// Игрок закрыл экран итогов главы.
     func advanceFromResult() {
-        if chapter == .studio {
-            saveBest(score)
-            phase = .finale
-        } else if let next = Chapter(rawValue: chapter.rawValue + 1) {
+        if let next = Chapter(rawValue: chapter.rawValue + 1) {
             chapter = next
             result = nil
-            phase = .chapterCard
+            playCutscene(.intro(next))
         } else {
             saveBest(score)
+            playCutscene(.finale)
+        }
+    }
+
+    // MARK: - Кат-сцены
+
+    private func playCutscene(_ id: CutsceneID) {
+        banners = []
+        touching = false
+        pendingTap = nil
+        cutscene = CutscenePlayback(script: CutsceneLibrary.script(id))
+        phase = .cutscene
+    }
+
+    /// Тап по экрану в кат-сцене — следующий кадр.
+    func skipShot() {
+        guard phase == .cutscene, var playback = cutscene else { return }
+        // Защита от случайного двойного тапа на стыке кадров.
+        guard playback.shotTime > 0.35 else { return }
+        playback.index += 1
+        playback.shotTime = 0
+        if playback.isFinished {
+            finishCutscene()
+        } else {
+            cutscene = playback
+        }
+    }
+
+    /// Кнопка «Пропустить» — вся кат-сцена целиком.
+    func skipCutscene() {
+        guard phase == .cutscene else { return }
+        finishCutscene()
+    }
+
+    private func advanceCutscene(_ dt: Double) {
+        guard var playback = cutscene else {
+            phase = .chapterCard
+            return
+        }
+        playback.shotTime += dt
+        if playback.shotTime >= playback.shot.duration {
+            playback.index += 1
+            playback.shotTime = 0
+        }
+        if playback.isFinished {
+            finishCutscene()
+        } else {
+            cutscene = playback
+        }
+    }
+
+    private func finishCutscene() {
+        guard let id = cutscene?.script.id else {
+            phase = .chapterCard
+            return
+        }
+        cutscene = nil
+        switch id {
+        case .prologue:
+            playCutscene(.intro(.van))
+        case .intro:
+            phase = .chapterCard
+        case .outro:
+            phase = .chapterResult
+        case .finale:
             phase = .finale
+        }
+    }
+
+    /// Какую 3D-площадку сейчас показывать.
+    var stageID: StageID {
+        switch phase {
+        case .menu:
+            return .road
+        case .cutscene:
+            return cutscene?.script.id.stage ?? chapter.stage
+        case .finale:
+            return .finale
+        default:
+            return chapter.stage
         }
     }
 
@@ -127,6 +205,7 @@ final class GameEngine: ObservableObject {
     }
 
     func goToMenu() {
+        cutscene = nil
         phase = .menu
         touching = false
         dragActive = false
@@ -151,6 +230,10 @@ final class GameEngine: ObservableObject {
     }
 
     func touchBegan(_ normalized: CGPoint) {
+        if phase == .cutscene {
+            skipShot()
+            return
+        }
         guard phase == .playing else { return }
         touching = true
         touchX = clamp(normalized.x, 0, 1)
@@ -166,6 +249,9 @@ final class GameEngine: ObservableObject {
         touching = false
     }
 
+    /// Палец на экране — для 3D-сцены (Эдвард склоняется к ране, пока игрок держит).
+    var isHolding: Bool { touching }
+
     // MARK: - Игровой цикл
 
     func update(dt: CGFloat) {
@@ -180,6 +266,12 @@ final class GameEngine: ObservableObject {
             banners[index].y -= CGFloat(dt) * 0.10
         }
         banners.removeAll { $0.life <= 0 }
+
+        if phase == .cutscene {
+            pendingTap = nil
+            advanceCutscene(Double(dt))
+            return
+        }
 
         guard phase == .playing else {
             pendingTap = nil
@@ -241,7 +333,8 @@ final class GameEngine: ObservableObject {
             rank: rank,
             note: Self.note(for: chapter)
         )
-        phase = .chapterResult
+        // Сначала развязка главы, потом экран итогов.
+        playCutscene(.outro(chapter))
     }
 
     private static func note(for chapter: Chapter) -> String {

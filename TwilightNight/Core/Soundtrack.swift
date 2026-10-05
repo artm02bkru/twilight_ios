@@ -36,8 +36,7 @@ final class SoundtrackPlayer: ObservableObject {
             return
         }
 
-        guard let url = Bundle.main.url(forResource: Self.resourceName,
-                                        withExtension: Self.resourceExtension),
+        guard let url = Self.findTrack(),
               let player = try? AVAudioPlayer(contentsOf: url) else {
             // Трека нет в сборке — просто играем без музыки, без падения.
             NSLog("SoundtrackPlayer: \(Self.resourceName).\(Self.resourceExtension) не найден в бандле")
@@ -87,6 +86,21 @@ final class SoundtrackPlayer: ObservableObject {
     }
 
     // MARK: - Внутреннее
+
+    /// Ищет трек: сначала по имени, потом любой mp3/m4a в папке Audio.
+    private static func findTrack() -> URL? {
+        let bundle = Bundle.main
+        if let url = bundle.url(forResource: resourceName, withExtension: resourceExtension, subdirectory: "Audio")
+            ?? bundle.url(forResource: resourceName, withExtension: resourceExtension) {
+            return url
+        }
+        for ext in ["mp3", "m4a", "aac", "wav"] {
+            if let url = bundle.urls(forResourcesWithExtension: ext, subdirectory: "Audio")?.first {
+                return url
+            }
+        }
+        return nil
+    }
 
     private func configureAudioSession() {
         let session = AVAudioSession.sharedInstance()
