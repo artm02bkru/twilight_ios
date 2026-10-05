@@ -128,45 +128,43 @@ enum CharacterSculpt {
         let lips = HeadSlot.lips.rawValue
         let brow = HeadSlot.brow.rawValue
         let f = look.female
+        let detail: Float = 0.0012
 
-        // Череп и лицо.
-        m.ellipsoid(V3(0, 0.12, -0.005), V3(0.092, 0.1, 0.095), slot: skin, blend: 0.03)
-        m.ellipsoid(V3(0, 0.07, 0.02), V3(f ? 0.068 : 0.073, 0.085, 0.081), slot: skin, blend: 0.03)
-        // Челюсть и подбородок.
-        m.box(V3(0, 0.043, 0.035), V3(f ? 0.04 : 0.05, 0.028, 0.04), round: 0.025, rotation: V3(0.2, 0, 0),
-              slot: skin, blend: 0.03)
-        m.ellipsoid(V3(0, 0.026, 0.07), V3(f ? 0.022 : 0.027, 0.02, 0.02), slot: skin, blend: 0.02)
-        // Скулы и надбровья.
-        m.ellipsoid(V3(0.046, 0.093, 0.058), V3(0.03, 0.02, 0.025), slot: skin, blend: 0.025)
-        m.ellipsoid(V3(-0.046, 0.093, 0.058), V3(0.03, 0.02, 0.025), slot: skin, blend: 0.025)
-        m.ellipsoid(V3(0, 0.138, 0.076), V3(0.058, 0.013, 0.02), slot: skin, blend: 0.02)
+        // Череп, лицо, челюсть, подбородок.
+        m.ellipsoid(V3(0, 0.122, -0.008), V3(0.09, 0.1, 0.097), slot: skin, blend: 0.03)
+        m.ellipsoid(V3(0, 0.088, 0.028), V3(f ? 0.064 : 0.07, 0.07, 0.072), slot: skin, blend: 0.035)
+        m.ellipsoid(V3(0, 0.05, 0.032), V3(f ? 0.052 : 0.062, 0.044, 0.062), slot: skin, blend: 0.035)
+        m.ellipsoid(V3(0, 0.024, 0.072), V3(f ? 0.021 : 0.026, 0.019, 0.02), slot: skin, blend: 0.022)
+        // Скулы и надбровье.
+        m.ellipsoid(V3(0.047, 0.094, 0.06), V3(0.026, 0.018, 0.024), slot: skin, blend: 0.025)
+        m.ellipsoid(V3(-0.047, 0.094, 0.06), V3(0.026, 0.018, 0.024), slot: skin, blend: 0.025)
+        m.ellipsoid(V3(0, 0.137, 0.078), V3(0.056, 0.012, 0.018), slot: skin, blend: 0.02)
 
         // Нос: спинка, кончик, крылья.
-        m.capsule(V3(0, 0.126, 0.087), V3(0, 0.091, 0.104), 0.008, 0.0115, slot: skin, blend: 0.012)
-        m.ellipsoid(V3(0, 0.088, 0.106), V3(0.0135, 0.012, 0.013), slot: skin, blend: 0.01)
-        m.ellipsoid(V3(0.011, 0.084, 0.099), V3(0.008, 0.006, 0.008), slot: skin, blend: 0.008)
-        m.ellipsoid(V3(-0.011, 0.084, 0.099), V3(0.008, 0.006, 0.008), slot: skin, blend: 0.008)
+        m.capsule(V3(0, 0.128, 0.089), V3(0, 0.092, 0.111), 0.0072, 0.0105, slot: skin, blend: 0.012)
+        m.ellipsoid(V3(0, 0.088, 0.111), V3(0.0125, 0.011, 0.012), slot: skin, blend: 0.01)
 
-        // Глазницы и веки.
         for side: Float in [1, -1] {
-            m.ellipsoid(V3(side * 0.034, 0.118, 0.094), V3(0.018, 0.013, 0.012), slot: skin,
+            m.ellipsoid(V3(side * 0.0115, 0.085, 0.1), V3(0.0085, 0.006, 0.008), slot: skin, blend: 0.008)
+            // Глазница и веки.
+            m.ellipsoid(V3(side * 0.034, 0.119, 0.093), V3(0.017, 0.012, 0.012), slot: skin,
                         blend: 0.008, subtract: true)
-            m.ellipsoid(V3(side * 0.034, 0.1245, 0.0845), V3(0.0165, 0.0075, 0.011), slot: skin, blend: 0.004)
-            m.ellipsoid(V3(side * 0.034, 0.1105, 0.0855), V3(0.015, 0.004, 0.009), slot: skin, blend: 0.004)
+            m.ellipsoid(V3(side * 0.034, 0.1272, 0.0846), V3(0.0156, 0.0054, 0.0106), slot: skin, blend: 0.004)
+            m.ellipsoid(V3(side * 0.034, 0.1108, 0.0858), V3(0.0148, 0.0038, 0.0092), slot: skin, blend: 0.004)
             // Брови.
-            m.box(V3(side * 0.036, 0.1435, 0.0875), V3(0.016, 0.0034, 0.005), round: 0.002,
-                  rotation: V3(0, 0, -side * 0.12), slot: brow, blend: 0.003)
+            m.box(V3(side * 0.036, 0.1465, 0.0895), V3(0.0155, 0.0024, 0.0045), round: 0.0018,
+                  rotation: V3(0, 0, -side * 0.14), slot: brow, blend: 0.003, claim: detail)
             // Уши.
-            m.ellipsoid(V3(side * 0.092, 0.11, 0.0), V3(0.011, 0.028, 0.019), slot: skin, blend: 0.01)
-            m.ellipsoid(V3(side * 0.098, 0.11, 0.002), V3(0.006, 0.016, 0.01), slot: skin,
+            m.ellipsoid(V3(side * 0.091, 0.11, -0.002), V3(0.011, 0.028, 0.019), slot: skin, blend: 0.01)
+            m.ellipsoid(V3(side * 0.097, 0.11, 0.0), V3(0.006, 0.016, 0.01), slot: skin,
                         blend: 0.004, subtract: true)
         }
 
         // Губы и линия рта.
-        m.ellipsoid(V3(0, 0.0612, 0.0935), V3(0.022, 0.0074, 0.0102), slot: lips, blend: 0.006)
-        m.ellipsoid(V3(0, 0.0505, 0.0915), V3(0.02, 0.0082, 0.0102), slot: lips, blend: 0.006)
-        m.box(V3(0, 0.0558, 0.101), V3(0.021, 0.0011, 0.012), round: 0.001, slot: skin,
-              blend: 0.002, subtract: true)
+        m.ellipsoid(V3(0, 0.0628, 0.0985), V3(0.0185, 0.0058, 0.0088), slot: lips, blend: 0.006, claim: detail)
+        m.ellipsoid(V3(0, 0.0525, 0.0965), V3(0.0168, 0.0066, 0.0088), slot: lips, blend: 0.006, claim: detail)
+        m.box(V3(0, 0.0575, 0.106), V3(0.018, 0.0007, 0.012), round: 0.0008, slot: skin,
+              blend: 0.0015, subtract: true)
 
         // Обрубок шеи — уходит внутрь шеи тела, скрывает стык.
         m.capsule(V3(0, 0.03, -0.012), V3(0, -0.06, -0.016), 0.047, 0.047, slot: skin, blend: 0.02)
@@ -180,7 +178,7 @@ enum CharacterSculpt {
         var rng = SeededRandom(seed: 77 &+ UInt64(look.name.unicodeScalars.reduce(0) { $0 &+ Int($1.value) }))
 
         // Основа: шапка волос над лбом и затылком.
-        m.ellipsoid(V3(0, 0.14, -0.028), V3(0.107, 0.107, 0.113), slot: 0, blend: 0.02)
+        m.ellipsoid(V3(0, 0.146, -0.034), V3(0.106, 0.106, 0.113), slot: 0, blend: 0.02)
 
         switch look.hair {
         case .messy:
@@ -196,9 +194,9 @@ enum CharacterSculpt {
 
         case .long, .wavy:
             let len: Float = look.hair == .long ? 0.36 : 0.2
-            m.box(V3(0, 0.12 - len / 2, -0.086), V3(0.098, len / 2, 0.026), round: 0.022, slot: 0, blend: 0.03)
+            m.box(V3(0, 0.12 - len / 2, -0.088), V3(0.098, len / 2, 0.026), round: 0.022, slot: 0, blend: 0.03)
             for side: Float in [1, -1] {
-                m.box(V3(side * 0.088, 0.11 - len * 0.42, -0.018), V3(0.022, len * 0.42, 0.03), round: 0.016,
+                m.box(V3(side * 0.088, 0.11 - len * 0.42, -0.02), V3(0.022, len * 0.42, 0.03), round: 0.016,
                       rotation: V3(0, 0, side * 0.06), slot: 0, blend: 0.025)
             }
             // Пряди — волны по поверхности.
@@ -209,8 +207,6 @@ enum CharacterSculpt {
                 m.ellipsoid(V3(x, y, z), V3(0.02, 0.06, 0.014), rotation: V3(0, 0, rng.range(-0.2, 0.2)),
                             slot: 0, blend: 0.015)
             }
-            m.ellipsoid(V3(0.03, 0.2, 0.06), V3(0.06, 0.024, 0.04), rotation: V3(-0.3, 0, -0.25),
-                        slot: 0, blend: 0.012)
 
         case .spiky:
             for i in 0..<16 {

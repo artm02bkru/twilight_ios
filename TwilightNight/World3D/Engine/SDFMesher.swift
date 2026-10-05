@@ -24,15 +24,20 @@ struct SDFPrim {
     var blend: Float
     /// Вычесть фигуру (глазницы, вырезы, колёсные арки).
     var subtract: Bool
+    /// Насколько близко к фигуре точка должна быть, чтобы получить её материал.
+    /// Мелким деталям (губы, брови) даём маленький радиус — иначе цвет «расползается».
+    var claim: Float
     private(set) var lo = V3.zero
     private(set) var hi = V3.zero
 
-    init(_ shape: Shape, slot: Int, bone: Int = 0, blend: Float = 0.02, subtract: Bool = false) {
+    init(_ shape: Shape, slot: Int, bone: Int = 0, blend: Float = 0.02, subtract: Bool = false,
+         claim: Float = .greatestFiniteMagnitude) {
         self.shape = shape
         self.slot = slot
         self.bone = bone
         self.blend = blend
         self.subtract = subtract
+        self.claim = claim
         let pad = blend * 2 + 0.004
         switch shape {
         case let .capsule(a, b, ra, rb):
@@ -106,15 +111,15 @@ final class SDFModel {
     }
 
     func ellipsoid(_ c: V3, _ r: V3, rotation: V3 = .zero, slot: Int, bone: Int = 0,
-                   blend: Float = 0.02, subtract: Bool = false) {
+                   blend: Float = 0.02, subtract: Bool = false, claim: Float = .greatestFiniteMagnitude) {
         prims.append(SDFPrim(.ellipsoid(c, r, rotationToLocal(rotation)), slot: slot, bone: bone,
-                             blend: blend, subtract: subtract))
+                             blend: blend, subtract: subtract, claim: claim))
     }
 
     func box(_ c: V3, _ half: V3, round: Float, rotation: V3 = .zero, slot: Int, bone: Int = 0,
-             blend: Float = 0.02, subtract: Bool = false) {
+             blend: Float = 0.02, subtract: Bool = false, claim: Float = .greatestFiniteMagnitude) {
         prims.append(SDFPrim(.box(c, half, round, rotationToLocal(rotation)), slot: slot, bone: bone,
-                             blend: blend, subtract: subtract))
+                             blend: blend, subtract: subtract, claim: claim))
     }
 
     @inline(__always)
@@ -135,7 +140,7 @@ final class SDFModel {
         var result = (slot: 0, bone: 0)
         for pr in prims where !pr.subtract {
             let d = pr.distance(p)
-            if d < best {
+            if d < best && d < pr.claim {
                 best = d
                 result = (pr.slot, pr.bone)
             }

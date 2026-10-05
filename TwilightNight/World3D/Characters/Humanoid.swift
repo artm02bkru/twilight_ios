@@ -220,16 +220,16 @@ final class Humanoid {
         let pupil = Materials.pbr(UIColor(white: 0.01, alpha: 1), roughness: 0.05)
         for side: Float in [1, -1] {
             let x = side * 0.034
-            let ball = SCNSphere(radius: 0.0122)
+            let ball = SCNSphere(radius: 0.0128)
             ball.segmentCount = 24
-            head.add(SCNNode(ball, white).at(x, 0.118, 0.08))
+            head.add(SCNNode(ball, white).at(x, 0.119, 0.081))
             let irisNode = SCNNode(SCNSphere(radius: 1), iris)
-            irisNode.simdScale = V3(0.0074, 0.0074, 0.0032)
-            irisNode.simdPosition = V3(x, 0.118, 0.0912)
+            irisNode.simdScale = V3(0.0079, 0.0079, 0.0032)
+            irisNode.simdPosition = V3(x, 0.119, 0.0928)
             head.add(irisNode)
             let pupilNode = SCNNode(SCNSphere(radius: 1), pupil)
-            pupilNode.simdScale = V3(0.0033, 0.0033, 0.0016)
-            pupilNode.simdPosition = V3(x, 0.118, 0.0937)
+            pupilNode.simdScale = V3(0.0035, 0.0035, 0.0016)
+            pupilNode.simdPosition = V3(x, 0.119, 0.0955)
             head.add(pupilNode)
         }
 

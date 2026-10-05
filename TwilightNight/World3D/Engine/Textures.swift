@@ -100,7 +100,7 @@ enum Textures {
         func at(_ x: Int, _ y: Int) -> Float {
             h[((y + size) % size) * size + ((x + size) % size)]
         }
-        return image(width: size, height: size) { x, y in
+        return image(width: size, height: size) { (x: Int, y: Int) -> SIMD4<Float> in
             let dx = (at(x + 1, y) - at(x - 1, y)) * strength
             let dy = (at(x, y + 1) - at(x, y - 1)) * strength
             let n = simd_normalize(SIMD3<Float>(-dx, -dy, 1))
@@ -117,7 +117,7 @@ enum Textures {
     static let asphalt: UIImage = {
         let n = TileNoise(seed: 11)
         let size = 256
-        return image(width: size, height: size) { x, y in
+        return image(width: size, height: size) { (x: Int, y: Int) -> SIMD4<Float> in
             let u = Float(x) / Float(size), v = Float(y) / Float(size)
             let large = n.fbm(u, v, basePeriod: 4, octaves: 4)
             let grain = n.cell(x, y)
@@ -134,7 +134,7 @@ enum Textures {
     static let asphaltRoughness: UIImage = {
         let n = TileNoise(seed: 12)
         let size = 256
-        return image(width: size, height: size) { x, y in
+        return image(width: size, height: size) { (x: Int, y: Int) -> SIMD4<Float> in
             let u = Float(x) / Float(size), v = Float(y) / Float(size)
             let f = n.fbm(u, v, basePeriod: 3, octaves: 4)
             let wet = smoothstepf(0.48, 0.62, f)
@@ -146,7 +146,7 @@ enum Textures {
     static let asphaltNormal: UIImage = {
         let n = TileNoise(seed: 13)
         let size = 256
-        return normalMap(size: size, strength: 2.2) { x, y in
+        return normalMap(size: size, strength: 2.2) { (x: Int, y: Int) -> Float in
             n.cell(x, y) * 0.35 + n.fbm(Float(x) / Float(size), Float(y) / Float(size), basePeriod: 16, octaves: 3)
         }
     }()
@@ -157,7 +157,7 @@ enum Textures {
         let n = TileNoise(seed: 21)
         let size = 256
         let dark = rgb(0x2B4220), light = rgb(0x4F6B2F), dry = rgb(0x6B6A3A)
-        return image(width: size, height: size) { x, y in
+        return image(width: size, height: size) { (x: Int, y: Int) -> SIMD4<Float> in
             let u = Float(x) / Float(size), v = Float(y) / Float(size)
             let a = n.fbm(u, v, basePeriod: 4, octaves: 4)
             let b = n.fbm(u + 0.37, v + 0.11, basePeriod: 8, octaves: 3)
@@ -172,7 +172,7 @@ enum Textures {
         let n = TileNoise(seed: 31)
         let size = 256
         let base = rgb(0x6A4B32), wet = rgb(0x3F2B1E)
-        return image(width: size, height: size) { x, y in
+        return image(width: size, height: size) { (x: Int, y: Int) -> SIMD4<Float> in
             let u = Float(x) / Float(size), v = Float(y) / Float(size)
             let a = n.fbm(u, v, basePeriod: 4, octaves: 5)
             var c = simd_mix(wet, base, SIMD3(repeating: a))
@@ -184,7 +184,7 @@ enum Textures {
     static let groundNormal: UIImage = {
         let n = TileNoise(seed: 32)
         let size = 256
-        return normalMap(size: size, strength: 3.0) { x, y in
+        return normalMap(size: size, strength: 3.0) { (x: Int, y: Int) -> Float in
             n.fbm(Float(x) / Float(size), Float(y) / Float(size), basePeriod: 12, octaves: 4) + n.cell(x, y) * 0.15
         }
     }()
@@ -192,7 +192,7 @@ enum Textures {
     static let snow: UIImage = {
         let n = TileNoise(seed: 41)
         let size = 256
-        return image(width: size, height: size) { x, y in
+        return image(width: size, height: size) { (x: Int, y: Int) -> SIMD4<Float> in
             let u = Float(x) / Float(size), v = Float(y) / Float(size)
             let a = n.fbm(u, v, basePeriod: 6, octaves: 4)
             let c = SIMD3<Float>(0.86, 0.89, 0.94) * (0.88 + a * 0.14)
@@ -209,7 +209,7 @@ enum Textures {
         let rows = 8
         let plankH = size / rows
         let light = rgb(0x9C6B3F), dark = rgb(0x5B3A20)
-        return image(width: size, height: size) { x, y in
+        return image(width: size, height: size) { (x: Int, y: Int) -> SIMD4<Float> in
             let row = y / plankH
             let inRow = y % plankH
             // Стыки досок вразбежку.
@@ -220,7 +220,7 @@ enum Textures {
             let tint = n.cell(row, plank + 31)
             let u = Float(along) / Float(size), v = Float(y) / Float(size)
             let warp = n.fbm(u, v, basePeriod: 4, octaves: 3)
-            let grain = 0.5 + 0.5 * sin((v * Float(rows) * 9 + warp * 6) * .pi * 2)
+            let grain = 0.5 + 0.5 * sin((v * Float(rows) * 9 + warp * 6) * Float.pi * 2)
             var c = simd_mix(dark, light, SIMD3(repeating: 0.35 + tint * 0.5))
             c *= 0.86 + grain * 0.18
             if inRow < 2 || along % plankLen < 2 { c *= 0.35 }
@@ -233,7 +233,7 @@ enum Textures {
         let rows = 8
         let plankH = size / rows
         let n = TileNoise(seed: 52)
-        return normalMap(size: size, strength: 1.6) { x, y in
+        return normalMap(size: size, strength: 1.6) { (x: Int, y: Int) -> Float in
             let inRow = y % plankH
             let groove: Float = inRow < 2 ? 0 : 1
             return groove * 0.6 + n.fbm(Float(x) / Float(size), Float(y) / Float(size), basePeriod: 32, octaves: 2) * 0.1
@@ -243,7 +243,7 @@ enum Textures {
     static let bark: UIImage = {
         let n = TileNoise(seed: 53)
         let size = 128
-        return image(width: size, height: size) { x, y in
+        return image(width: size, height: size) { (x: Int, y: Int) -> SIMD4<Float> in
             let u = Float(x) / Float(size), v = Float(y) / Float(size)
             let a = n.fbm(u * 1, v * 0.25, basePeriod: 8, octaves: 4)
             let c = rgb(0x3B2A1F) * (0.6 + a * 0.7)
@@ -258,7 +258,7 @@ enum Textures {
         let size = 256
         let bw = 64, bh = 24
         let base = rgb(0x7A3B2A), mortar = rgb(0x8E877C)
-        return image(width: size, height: size) { x, y in
+        return image(width: size, height: size) { (x: Int, y: Int) -> SIMD4<Float> in
             let row = y / bh
             let shift = row % 2 == 0 ? 0 : bw / 2
             let bx = (x + shift) % bw
@@ -280,9 +280,9 @@ enum Textures {
     static let fabricNormal: UIImage = {
         let size = 128
         let n = TileNoise(seed: 71)
-        return normalMap(size: size, strength: 1.2) { x, y in
-            let wx = sin(Float(x) / Float(size) * .pi * 2 * 32)
-            let wy = sin(Float(y) / Float(size) * .pi * 2 * 32)
+        return normalMap(size: size, strength: 1.2) { (x: Int, y: Int) -> Float in
+            let wx = sin(Float(x) / Float(size) * Float.pi * 2 * 32)
+            let wy = sin(Float(y) / Float(size) * Float.pi * 2 * 32)
             return (wx * wy) * 0.25 + 0.5 + n.cell(x, y) * 0.08
         }
     }()
@@ -291,7 +291,7 @@ enum Textures {
     static let skinNormal: UIImage = {
         let size = 128
         let n = TileNoise(seed: 72)
-        return normalMap(size: size, strength: 0.9) { x, y in
+        return normalMap(size: size, strength: 0.9) { (x: Int, y: Int) -> Float in
             n.fbm(Float(x) / Float(size), Float(y) / Float(size), basePeriod: 16, octaves: 3) * 0.6 + n.cell(x, y) * 0.1
         }
     }()
@@ -300,7 +300,7 @@ enum Textures {
     static let hairStrands: UIImage = {
         let size = 128
         let n = TileNoise(seed: 73)
-        return image(width: size, height: size) { x, y in
+        return image(width: size, height: size) { (x: Int, y: Int) -> SIMD4<Float> in
             let streak = n.value(Float(x) * 0.5, Float(y) * 0.02, period: 64)
             let v = 0.55 + streak * 0.6
             return SIMD4(v, v, v, 1)
@@ -313,7 +313,7 @@ enum Textures {
     static let sparkle: UIImage = {
         let n = TileNoise(seed: 81)
         let size = 256
-        return image(width: size, height: size) { x, y in
+        return image(width: size, height: size) { (x: Int, y: Int) -> SIMD4<Float> in
             let r = n.cell(x, y)
             if r > 0.992 {
                 return SIMD4(1, 1, 1, 1)
@@ -330,7 +330,7 @@ enum Textures {
     /// Мягкая круглая точка — снег, туман, пыль, огоньки.
     static let softDot: UIImage = {
         let size = 64
-        return image(width: size, height: size) { x, y in
+        return image(width: size, height: size) { (x: Int, y: Int) -> SIMD4<Float> in
             let dx = (Float(x) + 0.5) / Float(size) * 2 - 1
             let dy = (Float(y) + 0.5) / Float(size) * 2 - 1
             let d = min(1, sqrt(dx * dx + dy * dy))
@@ -342,7 +342,7 @@ enum Textures {
     /// Четырёхлучевая искра — блеск алмазной кожи.
     static let star: UIImage = {
         let size = 64
-        return image(width: size, height: size) { x, y in
+        return image(width: size, height: size) { (x: Int, y: Int) -> SIMD4<Float> in
             let dx = abs((Float(x) + 0.5) / Float(size) * 2 - 1)
             let dy = abs((Float(y) + 0.5) / Float(size) * 2 - 1)
             let core = max(0, 1 - sqrt(dx * dx + dy * dy) * 3)
@@ -356,7 +356,7 @@ enum Textures {
     static let smoke: UIImage = {
         let size = 64
         let n = TileNoise(seed: 91)
-        return image(width: size, height: size) { x, y in
+        return image(width: size, height: size) { (x: Int, y: Int) -> SIMD4<Float> in
             let u = (Float(x) + 0.5) / Float(size), v = (Float(y) + 0.5) / Float(size)
             let dx = u * 2 - 1, dy = v * 2 - 1
             let d = min(1, sqrt(dx * dx + dy * dy))
@@ -373,7 +373,7 @@ enum Textures {
         let size = 256
         let cols = 4, rows = 2
         let cw = size / cols, ch = size / rows
-        return image(width: size, height: size) { x, y in
+        return image(width: size, height: size) { (x: Int, y: Int) -> SIMD4<Float> in
             let cx = x / cw, cy = y / ch
             let lx = x % cw, ly = y % ch
             let inside = lx > cw / 6 && lx < cw * 5 / 6 && ly > ch / 5 && ly < ch * 4 / 5
@@ -416,16 +416,16 @@ enum Textures {
             sin(style.sunElevation),
             cos(style.sunElevation) * cos(style.sunAzimuth)
         )
-        return image(width: width, height: height) { x, y in
+        return image(width: width, height: height) { (x: Int, y: Int) -> SIMD4<Float> in
             let u = (Float(x) + 0.5) / Float(width)
             let v = (Float(y) + 0.5) / Float(height)
-            let az = u * 2 * .pi - .pi
-            let el = (0.5 - v) * .pi
+            let az = u * 2 * Float.pi - Float.pi
+            let el = (0.5 - v) * Float.pi
             let dir = SIMD3<Float>(cos(el) * sin(az), sin(el), cos(el) * cos(az))
 
             var c: SIMD3<Float>
             if el >= 0 {
-                let t = pow(min(1, el / (.pi / 2)), 0.45)
+                let t = pow(min(1, el / (Float.pi / 2)), 0.45)
                 c = simd_mix(style.horizon, style.zenith, SIMD3(repeating: t))
             } else {
                 let t = min(1, -el / 0.35)
