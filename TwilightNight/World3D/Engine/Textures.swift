@@ -209,22 +209,28 @@ enum Textures {
         let rows = 8
         let plankH = size / rows
         let light = rgb(0x9C6B3F), dark = rgb(0x5B3A20)
+        let plankLen: Int = size / 2
+        let fsize: Float = Float(size)
+        let grainFreq: Float = Float(rows) * 9
         return image(width: size, height: size) { (x: Int, y: Int) -> SIMD4<Float> in
-            let row = y / plankH
-            let inRow = y % plankH
+            let row: Int = y / plankH
+            let inRow: Int = y % plankH
             // Стыки досок вразбежку.
-            let offset = Int(n.cell(row, 7) * Float(size))
-            let plankLen = size / 2
-            let along = (x + offset) % size
-            let plank = (x + offset) / plankLen
-            let tint = n.cell(row, plank + 31)
-            let u = Float(along) / Float(size), v = Float(y) / Float(size)
-            let warp = n.fbm(u, v, basePeriod: 4, octaves: 3)
-            let grain = 0.5 + 0.5 * sin((v * Float(rows) * 9 + warp * 6) * Float.pi * 2)
-            var c = simd_mix(dark, light, SIMD3(repeating: 0.35 + tint * 0.5))
-            c *= 0.86 + grain * 0.18
-            if inRow < 2 || along % plankLen < 2 { c *= 0.35 }
-            return SIMD4(c, 1)
+            let offset: Int = Int(n.cell(row, 7) * fsize)
+            let along: Int = (x + offset) % size
+            let plank: Int = (x + offset) / plankLen
+            let tint: Float = n.cell(row, plank + 31)
+            let u: Float = Float(along) / fsize
+            let v: Float = Float(y) / fsize
+            let warp: Float = n.fbm(u, v, basePeriod: 4, octaves: 3)
+            let phase: Float = (v * grainFreq + warp * 6) * 2 * Float.pi
+            let grain: Float = 0.5 + 0.5 * sin(phase)
+            let mixAmount: Float = 0.35 + tint * 0.5
+            var c: SIMD3<Float> = simd_mix(dark, light, SIMD3<Float>(repeating: mixAmount))
+            let shade: Float = 0.86 + grain * 0.18
+            c *= shade
+            if inRow < 2 || along % plankLen < 2 { c *= Float(0.35) }
+            return SIMD4<Float>(c, 1)
         }
     }()
 
@@ -264,13 +270,16 @@ enum Textures {
             let bx = (x + shift) % bw
             let by = y % bh
             if bx < 3 || by < 3 {
-                return SIMD4(mortar * (0.8 + n.cell(x, y) * 0.2), 1)
+                let k: Float = 0.8 + n.cell(x, y) * 0.2
+                return SIMD4<Float>(mortar * k, 1)
             }
-            let id = n.cell((x + shift) / bw, row)
-            let u = Float(x) / Float(size), v = Float(y) / Float(size)
-            var c = base * (0.75 + id * 0.4)
-            c *= 0.85 + n.fbm(u, v, basePeriod: 16, octaves: 2) * 0.3
-            return SIMD4(c, 1)
+            let id: Float = n.cell((x + shift) / bw, row)
+            let u: Float = Float(x) / Float(size)
+            let v: Float = Float(y) / Float(size)
+            let tint: Float = 0.75 + id * 0.4
+            let grain: Float = 0.85 + n.fbm(u, v, basePeriod: 16, octaves: 2) * 0.3
+            let c: SIMD3<Float> = base * (tint * grain)
+            return SIMD4<Float>(c, 1)
         }
     }()
 
@@ -281,8 +290,9 @@ enum Textures {
         let size = 128
         let n = TileNoise(seed: 71)
         return normalMap(size: size, strength: 1.2) { (x: Int, y: Int) -> Float in
-            let wx = sin(Float(x) / Float(size) * Float.pi * 2 * 32)
-            let wy = sin(Float(y) / Float(size) * Float.pi * 2 * 32)
+            let k: Float = Float.pi * 64 / Float(size)
+            let wx: Float = sin(Float(x) * k)
+            let wy: Float = sin(Float(y) * k)
             return (wx * wy) * 0.25 + 0.5 + n.cell(x, y) * 0.08
         }
     }()
@@ -334,7 +344,7 @@ enum Textures {
             let dx = (Float(x) + 0.5) / Float(size) * 2 - 1
             let dy = (Float(y) + 0.5) / Float(size) * 2 - 1
             let d = min(1, sqrt(dx * dx + dy * dy))
-            let a = pow(1 - d, 2.2)
+            let a: Float = pow(1 - d, Float(2.2))
             return SIMD4(1, 1, 1, a)
         }
     }()
@@ -343,12 +353,15 @@ enum Textures {
     static let star: UIImage = {
         let size = 64
         return image(width: size, height: size) { (x: Int, y: Int) -> SIMD4<Float> in
-            let dx = abs((Float(x) + 0.5) / Float(size) * 2 - 1)
-            let dy = abs((Float(y) + 0.5) / Float(size) * 2 - 1)
-            let core = max(0, 1 - sqrt(dx * dx + dy * dy) * 3)
-            let rays = max(0, 1 - dx * 14) * max(0, 1 - dy) + max(0, 1 - dy * 14) * max(0, 1 - dx)
-            let a = min(1, core + rays * 0.9)
-            return SIMD4(1, 1, 1, a)
+            let fs: Float = Float(size)
+            let dx: Float = abs((Float(x) + 0.5) / fs * 2 - 1)
+            let dy: Float = abs((Float(y) + 0.5) / fs * 2 - 1)
+            let radius: Float = (dx * dx + dy * dy).squareRoot()
+            let core: Float = max(0, 1 - radius * 3)
+            let rayH: Float = max(0, 1 - dx * 14) * max(0, 1 - dy)
+            let rayV: Float = max(0, 1 - dy * 14) * max(0, 1 - dx)
+            let a: Float = min(1, core + (rayH + rayV) * 0.9)
+            return SIMD4<Float>(1, 1, 1, a)
         }
     }()
 
@@ -360,7 +373,8 @@ enum Textures {
             let u = (Float(x) + 0.5) / Float(size), v = (Float(y) + 0.5) / Float(size)
             let dx = u * 2 - 1, dy = v * 2 - 1
             let d = min(1, sqrt(dx * dx + dy * dy))
-            let a = pow(1 - d, 1.6) * (0.6 + n.fbm(u, v, basePeriod: 4, octaves: 3) * 0.6)
+            let noise: Float = n.fbm(u, v, basePeriod: 4, octaves: 3)
+            let a: Float = pow(1 - d, Float(1.6)) * (0.6 + noise * 0.6)
             return SIMD4(1, 1, 1, a)
         }
     }()
@@ -380,7 +394,8 @@ enum Textures {
             guard inside else { return SIMD4(0, 0, 0, 1) }
             let lit = n.cell(cx, cy + 9) > 0.35
             if !lit { return SIMD4(0.02, 0.025, 0.03, 1) }
-            let warm = SIMD3<Float>(1.0, 0.78, 0.48) * (0.7 + n.cell(cx, cy) * 0.3)
+            let k: Float = 0.7 + n.cell(cx, cy) * 0.3
+            let warm: SIMD3<Float> = SIMD3<Float>(1.0, 0.78, 0.48) * k
             // Переплёт рамы.
             if abs(lx - cw / 2) < 2 { return SIMD4(0.05, 0.04, 0.03, 1) }
             return SIMD4(warm, 1)
@@ -416,49 +431,58 @@ enum Textures {
             sin(style.sunElevation),
             cos(style.sunElevation) * cos(style.sunAzimuth)
         )
+        let fw: Float = Float(width), fh: Float = Float(height)
+        let halfPi: Float = Float.pi / 2
         return image(width: width, height: height) { (x: Int, y: Int) -> SIMD4<Float> in
-            let u = (Float(x) + 0.5) / Float(width)
-            let v = (Float(y) + 0.5) / Float(height)
-            let az = u * 2 * Float.pi - Float.pi
-            let el = (0.5 - v) * Float.pi
-            let dir = SIMD3<Float>(cos(el) * sin(az), sin(el), cos(el) * cos(az))
+            let u: Float = (Float(x) + 0.5) / fw
+            let v: Float = (Float(y) + 0.5) / fh
+            let az: Float = u * 2 * Float.pi - Float.pi
+            let el: Float = (0.5 - v) * Float.pi
+            let cosEl: Float = cos(el)
+            let dir = SIMD3<Float>(cosEl * sin(az), sin(el), cosEl * cos(az))
 
             var c: SIMD3<Float>
             if el >= 0 {
-                let t = pow(min(1, el / (Float.pi / 2)), 0.45)
-                c = simd_mix(style.horizon, style.zenith, SIMD3(repeating: t))
+                let up: Float = min(1, el / halfPi)
+                let t: Float = pow(up, Float(0.45))
+                c = simd_mix(style.horizon, style.zenith, SIMD3<Float>(repeating: t))
             } else {
-                let t = min(1, -el / 0.35)
-                c = simd_mix(style.horizon * 0.8, style.ground, SIMD3(repeating: t))
+                let t: Float = min(1, -el / 0.35)
+                let below: SIMD3<Float> = style.horizon * Float(0.8)
+                c = simd_mix(below, style.ground, SIMD3<Float>(repeating: t))
             }
 
             // Сияние вокруг солнца.
-            let sd = max(0, simd_dot(dir, sunDir))
-            c += style.sunColor * pow(sd, 8) * style.sunGlow
-            c += style.sunColor * pow(sd, 64) * style.sunGlow * 1.5
-            if style.sunDisc && sd > 0.9992 { c = style.sunColor * 4 }
+            let sd: Float = max(0, simd_dot(dir, sunDir))
+            let glowWide: Float = pow(sd, Float(8)) * style.sunGlow
+            let glowCore: Float = pow(sd, Float(64)) * style.sunGlow * 1.5
+            c += style.sunColor * (glowWide + glowCore)
+            if style.sunDisc && sd > 0.9992 { c = style.sunColor * Float(4) }
 
             // Облака — только над горизонтом, у горизонта сплющены.
             if el > -0.02 {
-                let squash = 1 / max(0.12, sin(max(0.02, el)) + 0.15)
-                let cu = u
-                let cv = min(0.999, v * 0.6 + squash * 0.02)
-                let f = n.fbm(cu, cv, basePeriod: 6, octaves: 5)
-                let threshold = 1 - style.cloudCover
-                let density = smoothstepf(threshold - 0.1, threshold + 0.25, f)
+                let sinEl: Float = sin(max(Float(0.02), el))
+                let squash: Float = 1 / max(Float(0.12), sinEl + 0.15)
+                let cu: Float = u
+                let cv: Float = min(0.999, v * 0.6 + squash * 0.02)
+                let f: Float = n.fbm(cu, cv, basePeriod: 6, octaves: 5)
+                let threshold: Float = 1 - style.cloudCover
+                let density: Float = smoothstepf(threshold - 0.1, threshold + 0.25, f)
                 if density > 0 {
-                    let shade = n.fbm(cu + 0.13, cv + 0.07, basePeriod: 12, octaves: 3)
-                    var cloud = simd_mix(style.cloudDark, style.cloudLight, SIMD3(repeating: shade))
-                    cloud += style.sunColor * pow(sd, 6) * 0.5
-                    let fade = min(1, (el + 0.02) / 0.1)
-                    c = simd_mix(c, cloud, SIMD3(repeating: density * fade))
+                    let shade: Float = n.fbm(cu + 0.13, cv + 0.07, basePeriod: 12, octaves: 3)
+                    var cloud: SIMD3<Float> = simd_mix(style.cloudDark, style.cloudLight, SIMD3<Float>(repeating: shade))
+                    let rim: Float = pow(sd, Float(6)) * 0.5
+                    cloud += style.sunColor * rim
+                    let fade: Float = min(1, (el + 0.02) / 0.1)
+                    c = simd_mix(c, cloud, SIMD3<Float>(repeating: density * fade))
                 }
             }
 
             if style.stars && el > 0.1 {
-                let r = n.cell(x, y)
+                let r: Float = n.cell(x, y)
                 if r > 0.996 {
-                    c += SIMD3(repeating: (r - 0.996) * 220 * (1 - style.cloudCover))
+                    let star: Float = (r - 0.996) * 220 * (1 - style.cloudCover)
+                    c += SIMD3<Float>(repeating: star)
                 }
             }
             return SIMD4(c, 1)
