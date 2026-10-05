@@ -225,7 +225,8 @@ enum CharacterSculpt {
             for _ in 0..<40 {
                 let a = rng.range(0, Float.pi * 2)
                 let e = rng.range(0.1, 1.4)
-                let p = V3(cos(a) * cos(e) * 0.104, 0.135 + sin(e) * 0.1, sin(a) * cos(e) * 0.106 - 0.025)
+                let ce: Float = cos(e)
+                let p = V3(cos(a) * ce * 0.104, 0.135 + sin(e) * 0.1, sin(a) * ce * 0.106 - 0.025)
                 if p.z > 0.05 && p.y < 0.17 { continue }
                 m.ellipsoid(p, V3(repeating: rng.range(0.018, 0.026)), slot: 0, blend: 0.008)
             }
@@ -243,7 +244,8 @@ enum CharacterSculpt {
                 let a = rng.range(0, Float.pi * 2)
                 let e = rng.range(-0.8, 1.2)
                 let r = rng.range(0.11, 0.17)
-                let p = V3(cos(a) * cos(e) * r, 0.12 + sin(e) * r * 0.8, sin(a) * cos(e) * r - 0.045)
+                let cr: Float = cos(e) * r
+                let p = V3(cos(a) * cr, 0.12 + sin(e) * r * 0.8, sin(a) * cr - 0.045)
                 if p.z > 0.04 && p.y < 0.19 { continue }
                 m.ellipsoid(p, V3(repeating: rng.range(0.035, 0.06)), slot: 0, blend: 0.03)
             }

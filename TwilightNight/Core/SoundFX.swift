@@ -228,7 +228,9 @@ final class SoundFX {
         case .impact:
             return buffer(seconds: 1.0) { _, t in
                 let thud = sin(t * 58 * 2 * Float.pi) * exp(-t * 7)
-                let metal = sin(t * 310 * 2 * Float.pi) * exp(-t * 9) * 0.4 + sin(t * 523 * 2 * Float.pi) * exp(-t * 12) * 0.25
+                let ring1: Float = sin(t * 310 * 2 * Float.pi) * exp(-t * 9) * 0.4
+                let ring2: Float = sin(t * 523 * 2 * Float.pi) * exp(-t * 12) * 0.25
+                let metal: Float = ring1 + ring2
                 return (thud + metal + n.white() * exp(-t * 30) * 0.6) * 0.9
             }
         case .batCrack:
