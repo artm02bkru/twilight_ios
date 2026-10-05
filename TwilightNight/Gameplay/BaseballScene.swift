@@ -5,7 +5,7 @@ import SwiftUI
 /// Тихий удар слышно на весь лес, и кочевники подходят ближе.
 struct BaseballScene {
 
-    static let beats = 8
+    static let beats = 10
     static let noiseLimit = 3
 
     enum Stage { case waiting, flight, resolving }

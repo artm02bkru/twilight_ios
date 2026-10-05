@@ -13,7 +13,7 @@ struct StudioScene {
     var extracted: Double = 0
     private var scoreStep: Double = 0
 
-    static let venomRate: Double = 0.11
+    static let venomRate: Double = 0.09
     private var difficulty: Double = 1
 
     var thirstRate: Double {

@@ -5,7 +5,7 @@ import SwiftUI
 /// У зоны время замедляется (как в фильме), а касание «почти вовремя» не стоит жизни.
 struct VanScene {
 
-    static let beats = 8
+    static let beats = 10
 
     enum Stage { case waiting, sliding, resolving }
     enum Quality { case perfect, good, close, missed }

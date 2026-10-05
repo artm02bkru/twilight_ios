@@ -31,7 +31,7 @@ struct BiologyScene {
 
     enum Stage { case showing, feedback }
 
-    static let slides = 12
+    static let slides = 15
 
     var slide = 0
     var current: Phase = .prophase

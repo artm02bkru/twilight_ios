@@ -12,7 +12,7 @@ struct MeadowScene {
         var born: Double
     }
 
-    static let duration: Double = 42
+    static let duration: Double = 55
 
     var edwardX: CGFloat = 0.5
     var targetX: CGFloat = 0.5

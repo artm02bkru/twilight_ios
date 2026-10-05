@@ -59,13 +59,13 @@ struct RunnerScene {
         self.kind = kind
         switch kind {
         case .street:
-            duration = 55
+            duration = 75
             baseSpeed = 8.5
         case .forest:
-            duration = 50
+            duration = 70
             baseSpeed = 19
         case .chase:
-            duration = 60
+            duration = 80
             baseSpeed = 28
         }
         speed = baseSpeed

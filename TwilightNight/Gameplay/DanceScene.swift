@@ -40,8 +40,8 @@ struct DanceScene {
         // Медленный вальс: в начале редкие шаги, к концу — чаще и с синкопами.
         var t: Double = 0.5
         var i = 0
-        while t < 62 {
-            let phase = t / 62
+        while t < 80 {
+            let phase = t / 80
             let interval = (1.3 - phase * 0.45) / Double(difficulty)
             let angle = Double(i) * 0.9
             let x = CGFloat(0.5 + cos(angle) * 0.22)
