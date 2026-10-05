@@ -77,11 +77,11 @@ final class StudioStage: Stage3D {
             root.addChildNode(n)
         }
         wall(w, V3(0, h / 2, -d / 2), 0)
-        wall(w, V3(0, h / 2, d / 2), .pi)
-        wall(d, V3(w / 2, h / 2, 0), -.pi / 2)
+        wall(w, V3(0, h / 2, d / 2), Float.pi)
+        wall(d, V3(w / 2, h / 2, 0), -Float.pi / 2)
         let ceiling = SCNNode(SCNPlane(width: CGFloat(w), height: CGFloat(d)),
                               Materials.pbr(UIColor(white: 0.5, alpha: 1), roughness: 0.9))
-        ceiling.eulerAngles.x = .pi / 2
+        ceiling.eulerAngles.x = Float.pi / 2
         ceiling.simdPosition = V3(0, h, 0)
         root.addChildNode(ceiling)
 
@@ -89,7 +89,9 @@ final class StudioStage: Stage3D {
         let windowWall = SCNNode(SCNPlane(width: CGFloat(d), height: CGFloat(h)),
                                  Materials.pbr(UIColor(white: 0.1, alpha: 1), roughness: 0.9))
         windowWall.simdPosition = V3(-w / 2, h / 2, 0)
-        windowWall.eulerAngles.y = .pi / 2
+        windowWall.eulerAngles.y = Float.pi / 2
+        // Стена с окнами не должна перекрывать закатный свет снаружи.
+        windowWall.castsShadow = false
         root.addChildNode(windowWall)
         let dusk = SCNMaterial()
         dusk.lightingModel = .constant
@@ -104,7 +106,8 @@ final class StudioStage: Stage3D {
             let z = -d / 2 + 1.5 + Float(i) * 2.7
             let pane = SCNNode(SCNPlane(width: 2.1, height: 2.6), dusk)
             pane.simdPosition = V3(-w / 2 + 0.02, 2.2, z)
-            pane.eulerAngles.y = .pi / 2
+            pane.eulerAngles.y = Float.pi / 2
+            pane.castsShadow = false
             root.addChildNode(pane)
             for dz: Float in [-1.05, 0, 1.05] {
                 let mullion = SCNNode(SCNBox(width: 0.06, height: 2.7, length: 0.06, chamferRadius: 0.01), frame)
@@ -135,12 +138,12 @@ final class StudioStage: Stage3D {
         }
         let barreMat = Materials.wood(tile: 1, roughness: 0.3)
         let barre = SCNNode(SCNCylinder(radius: 0.025, height: CGFloat(w - 1)), barreMat)
-        barre.eulerAngles.z = .pi / 2
+        barre.eulerAngles.z = Float.pi / 2
         barre.simdPosition = V3(0, 1.05, -d / 2 + 0.3)
         root.addChildNode(barre)
         for x: Float in [-6, -2, 2, 6] {
             let bracket = SCNNode(SCNCylinder(radius: 0.012, height: 0.28), Materials.chrome())
-            bracket.eulerAngles.x = .pi / 2
+            bracket.eulerAngles.x = Float.pi / 2
             bracket.simdPosition = V3(x, 1.05, -d / 2 + 0.16)
             root.addChildNode(bracket)
         }
@@ -192,14 +195,14 @@ final class StudioStage: Stage3D {
     // MARK: - Расстановка
 
     private func layout() {
-        bella.place(bellaFeet, yaw: .pi / 2)
+        bella.place(bellaFeet, yaw: Float.pi / 2)
         bella.snap(.lieArmOut)
         bella.breathing = 0.6
         let wrist = bella.handR.simdWorldPosition
-        edward.place(V3(wrist.x - 0.05, 0, wrist.z + 0.62), yaw: .pi)
+        edward.place(V3(wrist.x - 0.05, 0, wrist.z + 0.62), yaw: Float.pi)
         edward.snap(.kneelBend)
         let head = bella.head.simdWorldPosition
-        carlisle.place(V3(head.x - 0.6, 0, head.z + 0.15), yaw: .pi / 2)
+        carlisle.place(V3(head.x - 0.6, 0, head.z + 0.15), yaw: Float.pi / 2)
         carlisle.snap(.kneel)
         carlisle.lookAt = head
         alice.place(V3(head.x - 0.4, 0, head.z - 0.8), yaw: 0.6)
@@ -266,7 +269,7 @@ final class StudioStage: Stage3D {
             setVenom(0, pulse: 0)
         case .studioEmbrace:
             edward.snap(.kneelHold)
-            edward.place(edward.position + V3(-0.5, 0, -0.25), yaw: .pi + 0.6)
+            edward.place(edward.position + V3(-0.5, 0, -0.25), yaw: Float.pi + 0.6)
             setVenom(0, pulse: 0)
         default:
             break

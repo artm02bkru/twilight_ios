@@ -76,7 +76,7 @@ final class BaseballStage: Stage3D {
         let batNode = SCNNode(bat, Materials.pbr(UIColor(hex: 0xB88A55), roughness: 0.35))
         batNode.geometry?.firstMaterial?.clearCoat.contents = 0.8
         batNode.simdPosition = V3(0, -0.08, 0.38)
-        batNode.eulerAngles.x = .pi / 2
+        batNode.eulerAngles.x = Float.pi / 2
         edward.handR.addChildNode(batNode)
         // Перчатка-ловушка у Эммета.
         let mitt = SCNNode(SCNSphere(radius: 0.09), Materials.pbr(UIColor(hex: 0x5A3A22), roughness: 0.6))
@@ -138,11 +138,11 @@ final class BaseballStage: Stage3D {
         // Инфилд: земляной ромб, внутри трава.
         let infield = Nature.ground(size: 34, material: Materials.dirt(tile: 6))
         infield.simdPosition = V3(0, 0.01, -19.4)
-        infield.eulerAngles.y = .pi / 4
+        infield.eulerAngles.y = Float.pi / 4
         root.addChildNode(infield)
         let inner = Nature.ground(size: 24, material: Materials.grass(tile: 5))
         inner.simdPosition = V3(0, 0.02, -19.4)
-        inner.eulerAngles.y = .pi / 4
+        inner.eulerAngles.y = Float.pi / 4
         root.addChildNode(inner)
         root.addChildNode(Nature.grassField(radius: 60, count: 30_000, seed: 9, height: 0.08...0.2,
                                             avoid: { p in abs(p.x) + abs(p.z + 19.4) < 25 }))
@@ -158,12 +158,12 @@ final class BaseballStage: Stage3D {
         for p in [V3(19.4, 0.05, -19.4), V3(0, 0.05, -38.8), V3(-19.4, 0.05, -19.4)] {
             let base = SCNNode(SCNBox(width: 0.38, height: 0.08, length: 0.38, chamferRadius: 0.03), white)
             base.simdPosition = p
-            base.eulerAngles.y = .pi / 4
+            base.eulerAngles.y = Float.pi / 4
             root.addChildNode(base)
         }
         let plate = SCNNode(SCNBox(width: 0.43, height: 0.03, length: 0.43, chamferRadius: 0.01), white)
         plate.simdPosition = V3(0, 0.03, 0)
-        plate.eulerAngles.y = .pi / 4
+        plate.eulerAngles.y = Float.pi / 4
         root.addChildNode(plate)
         let dirtCircle = SCNNode(SCNCylinder(radius: 3.2, height: 0.02), Materials.dirt(tile: 2))
         dirtCircle.simdPosition = V3(0, 0.012, 0)
@@ -186,7 +186,7 @@ final class BaseballStage: Stage3D {
         let k = Float(t)
         let start = V3(-0.25, 1.95, -17.7)
         let end = V3(-0.05, 0.95, 0.35)
-        return mixv(start, end, k) + V3(0, sin(clampf(k, 0, 1) * .pi) * 0.35, 0)
+        return mixv(start, end, k) + V3(0, sin(clampf(k, 0, 1) * Float.pi) * 0.35, 0)
     }
 
     // MARK: - Погода
@@ -217,11 +217,11 @@ final class BaseballStage: Stage3D {
     // MARK: - Игра
 
     override func enterGameplay() {
-        edward.place(batterSpot, yaw: .pi / 2)
+        edward.place(batterSpot, yaw: Float.pi / 2)
         edward.snap(.batReady)
         alice.place(mound, yaw: 0)
         alice.snap(.pitchWindup)
-        emmett.place(V3(0, 0, 1.15), yaw: .pi)
+        emmett.place(V3(0, 0, 1.15), yaw: Float.pi)
         emmett.snap(.catcher)
         rosalie.place(V3(17, 0, -21), yaw: -0.7)
         rosalie.snap(.fielder)
@@ -262,7 +262,7 @@ final class BaseballStage: Stage3D {
         if s.ballFlight > 0.01 && s.quality != .missed {
             let u = Float(1 - s.ballFlight)
             let contact = ballPath(1)
-            let flight = V3(Float(s.ballFlightX) * 60 * u, sin(min(1, u * 1.2) * .pi) * 22, -85 * u)
+            let flight = V3(Float(s.ballFlightX) * 60 * u, sin(min(1, u * 1.2) * Float.pi) * 22, -85 * u)
             ball.simdPosition = contact + flight
         } else if s.stage == .flight || s.stage == .resolving {
             ball.simdPosition = s.ballT < 0
@@ -329,14 +329,14 @@ final class BaseballStage: Stage3D {
             for h in [edward, alice, emmett, rosalie, jasper, carlisle, esme] {
                 h.snap(.stand)
             }
-            edward.place(V3(0.6, 0, -5.5), yaw: .pi)
-            alice.place(V3(-1.6, 0, -6.2), yaw: .pi - 0.2)
-            emmett.place(V3(2.4, 0, -6.4), yaw: .pi + 0.2)
-            rosalie.place(V3(3.6, 0, -5.8), yaw: .pi + 0.3)
-            jasper.place(V3(-2.8, 0, -6.0), yaw: .pi - 0.3)
-            carlisle.place(V3(-0.6, 0, -7.0), yaw: .pi)
-            esme.place(V3(-1.9, 0, -4.4), yaw: .pi)
-            bella.place(V3(0.9, 0, -3.4), yaw: .pi)
+            edward.place(V3(0.6, 0, -5.5), yaw: Float.pi)
+            alice.place(V3(-1.6, 0, -6.2), yaw: Float.pi - 0.2)
+            emmett.place(V3(2.4, 0, -6.4), yaw: Float.pi + 0.2)
+            rosalie.place(V3(3.6, 0, -5.8), yaw: Float.pi + 0.3)
+            jasper.place(V3(-2.8, 0, -6.0), yaw: Float.pi - 0.3)
+            carlisle.place(V3(-0.6, 0, -7.0), yaw: Float.pi)
+            esme.place(V3(-1.9, 0, -4.4), yaw: Float.pi)
+            bella.place(V3(0.9, 0, -3.4), yaw: Float.pi)
             bella.snap(.stand)
             for (i, n) in nomads.enumerated() {
                 n.place(V3(Float(i - 1) * 2.2, 0, cue == .nomadsArrive ? -38 : -16.5), yaw: 0)
@@ -347,7 +347,7 @@ final class BaseballStage: Stage3D {
                 h.lookAt = james.head.simdWorldPosition
             }
             if cue == .edwardShields {
-                edward.place(V3(0.85, 0, -4.6), yaw: .pi)
+                edward.place(V3(0.85, 0, -4.6), yaw: Float.pi)
                 edward.target = .crouchDefend
                 edward.rate = 9
             }

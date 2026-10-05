@@ -22,10 +22,10 @@ extension MeshBuilder {
         var rng = SeededRandom(seed: seed)
         var grid: [[V3]] = []
         for r in 0...rings {
-            let phi = Float(r) / Float(rings) * .pi
+            let phi = Float(r) / Float(rings) * Float.pi
             var row: [V3] = []
             for s in 0..<segments {
-                let theta = Float(s) / Float(segments) * 2 * .pi
+                let theta = Float(s) / Float(segments) * 2 * Float.pi
                 let k = 1 + (r == 0 || r == rings ? 0 : rng.range(-jitter, jitter))
                 let p = V3(sin(phi) * cos(theta), cos(phi) * squash, sin(phi) * sin(theta)) * radius * k
                 row.append(center + p)
@@ -96,7 +96,7 @@ enum Nature {
         var placed = 0, attempts = 0
         while placed < count && attempts < count * 8 {
             attempts += 1
-            let a = rng.range(0, 2 * .pi)
+            let a = rng.range(0, 2 * Float.pi)
             // Ближе к краю поляны деревья гуще.
             let r = inner + (outer - inner) * pow(rng.unit(), 1.6)
             let p = center + V3(sin(a) * r, 0, cos(a) * r)
@@ -138,14 +138,14 @@ enum Nature {
             if let rect {
                 p = V3(rng.range(-rect.x, rect.x), 0, rng.range(-rect.y, rect.y))
             } else {
-                let a = rng.range(0, 2 * .pi)
+                let a = rng.range(0, 2 * Float.pi)
                 let r = radius * sqrt(rng.unit())
                 p = V3(sin(a) * r, 0, cos(a) * r)
             }
             if let avoid, avoid(p) { continue }
             let h = rng.range(height.lowerBound, height.upperBound)
             let w = rng.range(0.02, 0.045)
-            let dir = rng.range(0, 2 * .pi)
+            let dir = rng.range(0, 2 * Float.pi)
             let side = V3(cos(dir), 0, sin(dir)) * w
             let lean = V3(sin(dir + 1.3), 0, cos(dir + 1.3)) * h * rng.range(0.1, 0.35)
             let color = colors[Int(rng.unit() * Float(colors.count)) % colors.count]
@@ -170,7 +170,7 @@ enum Nature {
         var rng = SeededRandom(seed: seed)
         let stem = UIColor(hex: 0x3E6A2A)
         for _ in 0..<count {
-            let a = rng.range(0, 2 * .pi)
+            let a = rng.range(0, 2 * Float.pi)
             let r = radius * sqrt(rng.unit())
             let p = V3(sin(a) * r, 0, cos(a) * r)
             let h = rng.range(0.25, 0.55)
@@ -180,7 +180,7 @@ enum Nature {
             let petals = 5
             let size = rng.range(0.03, 0.055)
             for i in 0..<petals {
-                let t0 = Float(i) / Float(petals) * 2 * .pi
+                let t0 = Float(i) / Float(petals) * 2 * Float.pi
                 let t1 = t0 + 0.9
                 let p0 = top + V3(cos(t0), 0.15, sin(t0)) * size
                 let p1 = top + V3(cos(t1), 0.15, sin(t1)) * size
@@ -218,7 +218,7 @@ enum Nature {
         plane.widthSegmentCount = 1
         plane.heightSegmentCount = 1
         let node = SCNNode(plane, material)
-        node.eulerAngles.x = -.pi / 2
+        node.eulerAngles.x = -Float.pi / 2
         node.castsShadow = false
         return node
     }
@@ -232,7 +232,7 @@ enum Nature {
         ps.particleVelocity = 0.9
         ps.particleVelocityVariation = 0.4
         ps.emittingDirection = SCNVector3(0.15, -1, 0.05)
-        ps.spread = 25
+        ps.spreadingAngle = 25
         ps.particleSize = 0.035
         ps.particleSizeVariation = 0.02
         ps.particleImage = Textures.softDot
@@ -256,7 +256,7 @@ enum Nature {
         ps.particleLifeSpanVariation = 2
         ps.particleVelocity = 0.15
         ps.particleVelocityVariation = 0.1
-        ps.spread = 180
+        ps.spreadingAngle = 180
         ps.particleSize = 0.02
         ps.particleSizeVariation = 0.01
         ps.particleImage = Textures.softDot
@@ -305,7 +305,7 @@ enum Nature {
         ps.particleVelocity = 2.2
         ps.particleVelocityVariation = 1.2
         ps.emittingDirection = SCNVector3(0, 0.6, 0)
-        ps.spread = 50
+        ps.spreadingAngle = 50
         ps.particleSize = 0.12
         ps.particleSizeVariation = 0.08
         ps.particleImage = Textures.smoke
@@ -338,7 +338,7 @@ enum Nature {
         ps.particleVelocity = 0.4
         ps.particleVelocityVariation = 0.3
         ps.emittingDirection = SCNVector3(1, 0, 0.2)
-        ps.spread = 30
+        ps.spreadingAngle = 30
         ps.particleSize = 9
         ps.particleSizeVariation = 4
         ps.particleImage = Textures.smoke

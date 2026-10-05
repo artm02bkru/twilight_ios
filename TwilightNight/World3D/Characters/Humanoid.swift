@@ -349,8 +349,8 @@ final class Humanoid {
             let toTarget = lookAt - headWorld
             let worldYaw = atan2(toTarget.x, toTarget.z)
             var rel = worldYaw - yaw
-            while rel > .pi { rel -= 2 * .pi }
-            while rel < -.pi { rel += 2 * .pi }
+            while rel > Float.pi { rel -= 2 * Float.pi }
+            while rel < -Float.pi { rel += 2 * Float.pi }
             let flat = max(0.01, simd_length(V3(toTarget.x, 0, toTarget.z)))
             let pitch = -atan2(toTarget.y, flat)
             lookYaw = damp(lookYaw, clampf(rel, -1.1, 1.1), 6, dt)

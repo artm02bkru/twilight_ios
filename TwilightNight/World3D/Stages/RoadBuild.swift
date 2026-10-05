@@ -412,7 +412,7 @@ enum RoadBuild {
         ps.particleVelocity = 42
         ps.particleVelocityVariation = 14
         ps.emittingDirection = SCNVector3(0.10, -1, 0.04)
-        ps.spread = 4
+        ps.spreadingAngle = 4
         ps.particleSize = 0.34
         ps.particleSizeVariation = 0.16
         ps.particleImage = rainStreakImage()
@@ -426,7 +426,7 @@ enum RoadBuild {
         ps.birthDirection = .constant
         ps.loops = true
         ps.isLocal = false
-        ps.speed = 1.0
+        ps.speedFactor = 1.0
         return ps
     }
 
@@ -439,7 +439,7 @@ enum RoadBuild {
         ps.particleVelocity = 1.6
         ps.particleVelocityVariation = 0.8
         ps.emittingDirection = SCNVector3(1, 0.05, 0)
-        ps.spread = 0.6
+        ps.spreadingAngle = 0.6
         ps.particleSize = 26
         ps.particleSizeVariation = 12
         ps.particleColor = UIColor(white: 0.78, alpha: 0.045)

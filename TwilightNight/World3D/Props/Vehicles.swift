@@ -44,12 +44,12 @@ final class Vehicle {
             tire.ringSegmentCount = 36
             tire.pipeSegmentCount = 16
             let tireNode = SCNNode(tire, Materials.rubber())
-            tireNode.eulerAngles.z = .pi / 2
+            tireNode.eulerAngles.z = Float.pi / 2
             wheel.addChildNode(tireNode)
             let rim = SCNCylinder(radius: CGFloat(wheelRadius * 0.55), height: CGFloat(wheelRadius * 0.5))
             rim.radialSegmentCount = 28
             let rimNode = SCNNode(rim, Materials.pbr(UIColor(white: 0.55, alpha: 1), roughness: 0.3, metalness: 0.9))
-            rimNode.eulerAngles.z = .pi / 2
+            rimNode.eulerAngles.z = Float.pi / 2
             wheel.addChildNode(rimNode)
             let cap = SCNSphere(radius: CGFloat(wheelRadius * 0.22))
             let capNode = SCNNode(cap, Materials.chrome())

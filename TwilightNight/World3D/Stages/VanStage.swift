@@ -82,7 +82,7 @@ final class VanStage: Stage3D {
         let plane = SCNPlane(width: 1, height: 5.5)
         zone.geometry = plane
         plane.materials = [Materials.glow(UIColor(red: 0.45, green: 0.75, blue: 1, alpha: 1), intensity: 0.5)]
-        zone.eulerAngles.x = -.pi / 2
+        zone.eulerAngles.x = -Float.pi / 2
         zone.simdPosition = V3(2, 0.02, 0)
         zone.castsShadow = false
         root.addChildNode(zone)
@@ -91,7 +91,7 @@ final class VanStage: Stage3D {
                                   Materials.glowImage(Textures.softDot, color: UIColor(red: 0.5, green: 0.8, blue: 1, alpha: 1),
                                                       intensity: 0.8))
             curtain.simdPosition = V3(side, 0.7, 0)
-            curtain.eulerAngles.y = .pi / 2
+            curtain.eulerAngles.y = Float.pi / 2
             curtain.name = side < 0 ? "lo" : "hi"
             zoneEdges.addChildNode(curtain)
         }
@@ -121,7 +121,7 @@ final class VanStage: Stage3D {
         for row: Float in [-8, -15] {
             for i in -8...8 {
                 let line = SCNNode(SCNPlane(width: 0.12, height: 4.8), paint)
-                line.eulerAngles.x = -.pi / 2
+                line.eulerAngles.x = -Float.pi / 2
                 line.simdPosition = V3(Float(i) * 2.9 + 1.45, 0.004, row)
                 line.castsShadow = false
                 root.addChildNode(line)
@@ -137,7 +137,7 @@ final class VanStage: Stage3D {
             let car = Vehicle.sedan(color: colors[Int(rng.unit() * Float(colors.count)) % colors.count],
                                     metallic: CGFloat(rng.range(0.2, 0.7)))
             car.node.simdPosition = V3(Float(x), 0, Float(z))
-            car.node.simdEulerAngles.y = rng.range(-0.04, 0.04) + (rng.unit() > 0.5 ? .pi : 0)
+            car.node.simdEulerAngles.y = rng.range(-0.04, 0.04) + (rng.unit() > 0.5 ? Float.pi : 0)
             root.addChildNode(car.node)
         }
 
@@ -258,7 +258,7 @@ final class VanStage: Stage3D {
     // MARK: - Игра
 
     override func enterGameplay() {
-        bella.place(bellaSpot, yaw: .pi / 2)
+        bella.place(bellaSpot, yaw: Float.pi / 2)
         bella.snap(.stand)
         bella.lookAt = nil
         edward.place(edwardHome, yaw: -2.2)
@@ -302,7 +302,7 @@ final class VanStage: Stage3D {
                 edwardAtVan = true
                 shake = 1
             }
-            edward.place(spot, yaw: .pi / 2)
+            edward.place(spot, yaw: Float.pi / 2)
             edward.target = .reachPush
             edward.rate = 30
         } else {
@@ -354,23 +354,23 @@ final class VanStage: Stage3D {
         edward.opacity = 1
         switch cue {
         case .lotEstablish:
-            bella.place(tireSpot, yaw: -.pi / 2)
+            bella.place(tireSpot, yaw: -Float.pi / 2)
             bella.snap(.crouchTire)
             edward.place(edwardHome, yaw: -2.2)
             edward.snap(.handsInPockets)
-            setVan(V3(30, 0, 9), yaw: -.pi / 2, sliding: false)
+            setVan(V3(30, 0, 9), yaw: -Float.pi / 2, sliding: false)
         case .lotBella:
-            bella.place(tireSpot, yaw: -.pi / 2)
+            bella.place(tireSpot, yaw: -Float.pi / 2)
             bella.snap(.crouchTire)
         case .lotEdward:
             edward.place(edwardHome, yaw: -2.2)
             edward.snap(.handsInPockets)
             edward.lookAt = bella.head.simdWorldPosition
         case .lotVanSkid:
-            setVan(V3(30, 0, 6), yaw: -.pi / 2, sliding: true)
+            setVan(V3(30, 0, 6), yaw: -Float.pi / 2, sliding: true)
             shotStart = vanPos
         case .lotVanClose:
-            bella.place(bellaSpot, yaw: .pi / 2)
+            bella.place(bellaSpot, yaw: Float.pi / 2)
             bella.snap(.stand)
             bella.target = .flinch
             bella.rate = 3
@@ -378,16 +378,16 @@ final class VanStage: Stage3D {
         case .lotDent:
             setVan(V3(-2.4, 0, 0), yaw: 0.06, sliding: false)
             van.setDent(1)
-            edward.place(V3(-3.85, 0, 0.1), yaw: .pi / 2)
+            edward.place(V3(-3.85, 0, 0.1), yaw: Float.pi / 2)
             edward.snap(.reachPush)
-            bella.place(V3(-6.2, 0, 0.6), yaw: .pi / 2)
+            bella.place(V3(-6.2, 0, 0.6), yaw: Float.pi / 2)
             bella.snap(.sitGround)
         case .lotFacesBella, .lotFacesEdward:
             setVan(V3(-2.4, 0, 0), yaw: 0.06, sliding: false)
             van.setDent(1)
-            bella.place(V3(-6.2, 0, 0.6), yaw: .pi / 2)
+            bella.place(V3(-6.2, 0, 0.6), yaw: Float.pi / 2)
             bella.snap(.sitGround)
-            edward.place(V3(-5.25, 0, 1.0), yaw: -.pi / 2 - 0.35)
+            edward.place(V3(-5.25, 0, 1.0), yaw: -Float.pi / 2 - 0.35)
             edward.snap(.kneel)
             bella.lookAt = edward.head.simdWorldPosition
             edward.lookAt = bella.head.simdWorldPosition
@@ -410,7 +410,7 @@ final class VanStage: Stage3D {
             // Фургон заезжает и срывается в занос.
             let t = easeSoft(p)
             let pos = V3(lerpf(30, 13, t), 0, lerpf(6, 0.5, t))
-            setVan(pos, yaw: -.pi / 2 + t * (.pi / 2 + 0.4), sliding: true)
+            setVan(pos, yaw: -Float.pi / 2 + t * (Float.pi / 2 + 0.4), sliding: true)
             placeCamera(eye: V3(9, 1.0, 9) + V3(t * -2, 0, 0), target: vanPos + V3(0, 1, 0), fov: 48)
             if p > 0.4 { shake = max(shake, 0.25) }
         case .lotVanClose:

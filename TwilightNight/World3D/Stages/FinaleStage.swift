@@ -66,7 +66,7 @@ final class FinaleStage: Stage3D {
 
         let pillars = 8
         for i in 0..<pillars {
-            let a = Float(i) / Float(pillars) * 2 * .pi + .pi / 8
+            let a = Float(i) / Float(pillars) * 2 * Float.pi + Float.pi / 8
             let p = V3(sin(a) * 3.9, 0, cos(a) * 3.9)
             let column = SCNCylinder(radius: 0.11, height: 3.0)
             column.radialSegmentCount = 16
@@ -89,12 +89,12 @@ final class FinaleStage: Stage3D {
         let bulbMat = Materials.glow(UIColor(red: 1, green: 0.78, blue: 0.45, alpha: 1), intensity: 3, doubleSided: false)
         let bulbGeo = SCNSphere(radius: 0.03)
         for i in 0..<pillars {
-            let a = Float(i) / Float(pillars) * 2 * .pi + .pi / 8
+            let a = Float(i) / Float(pillars) * 2 * Float.pi + Float.pi / 8
             let end = V3(sin(a) * 3.9, 3.3, cos(a) * 3.9)
             let start = V3(0, 4.9, 0)
             for k in 1..<14 {
                 let t = Float(k) / 14
-                let p = mixv(start, end, t) - V3(0, sin(t * .pi) * 0.45, 0)
+                let p = mixv(start, end, t) - V3(0, sin(t * Float.pi) * 0.45, 0)
                 let b = SCNNode(bulbGeo, bulbMat)
                 b.simdPosition = p
                 b.castsShadow = false
@@ -102,11 +102,11 @@ final class FinaleStage: Stage3D {
                 bulbs.append(b)
             }
             // Нить между колоннами.
-            let a2 = Float(i + 1) / Float(pillars) * 2 * .pi + .pi / 8
+            let a2 = Float(i + 1) / Float(pillars) * 2 * Float.pi + Float.pi / 8
             let end2 = V3(sin(a2) * 3.9, 3.3, cos(a2) * 3.9)
             for k in 1..<8 {
                 let t = Float(k) / 8
-                let p = mixv(end, end2, t) - V3(0, sin(t * .pi) * 0.35, 0)
+                let p = mixv(end, end2, t) - V3(0, sin(t * Float.pi) * 0.35, 0)
                 let b = SCNNode(bulbGeo, bulbMat)
                 b.simdPosition = p
                 b.castsShadow = false
@@ -136,7 +136,7 @@ final class FinaleStage: Stage3D {
 
     private func layout() {
         // Белла стоит на ногах Эдварда — он ведёт.
-        bella.place(V3(0, 0, 0.17), yaw: .pi)
+        bella.place(V3(0, 0, 0.17), yaw: Float.pi)
         edward.place(V3(0, 0, -0.17), yaw: 0)
         bella.snap(.dance)
         edward.snap(.dance)

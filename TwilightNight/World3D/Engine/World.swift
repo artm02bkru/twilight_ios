@@ -175,8 +175,8 @@ final class MeshBuilder {
                  sides: Int = 7, color: UIColor) {
         let apex = SCNVector3(base.x, base.y + height, base.z)
         for i in 0..<sides {
-            let a0 = Float(i) / Float(sides) * 2 * .pi
-            let a1 = Float(i + 1) / Float(sides) * 2 * .pi
+            let a0 = Float(i) / Float(sides) * 2 * Float.pi
+            let a1 = Float(i + 1) / Float(sides) * 2 * Float.pi
             let p0 = SCNVector3(base.x + cos(a0) * radius, base.y, base.z + sin(a0) * radius)
             let p1 = SCNVector3(base.x + cos(a1) * radius, base.y, base.z + sin(a1) * radius)
             // лёгкая вариация оттенка по граням — читается объём
@@ -190,8 +190,8 @@ final class MeshBuilder {
                      sides: Int = 8, color: UIColor) {
         let top = SCNVector3(bottom.x, bottom.y + height, bottom.z)
         for i in 0..<sides {
-            let a0 = Float(i) / Float(sides) * 2 * .pi
-            let a1 = Float(i + 1) / Float(sides) * 2 * .pi
+            let a0 = Float(i) / Float(sides) * 2 * Float.pi
+            let a1 = Float(i + 1) / Float(sides) * 2 * Float.pi
             let b0 = SCNVector3(bottom.x + cos(a0) * radius, bottom.y, bottom.z + sin(a0) * radius)
             let b1 = SCNVector3(bottom.x + cos(a1) * radius, bottom.y, bottom.z + sin(a1) * radius)
             let t0 = SCNVector3(b0.x, top.y, b0.z)

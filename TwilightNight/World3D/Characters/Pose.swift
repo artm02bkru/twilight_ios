@@ -131,7 +131,7 @@ struct Pose {
     /// Лежит на спине.
     static let lieBack: Pose = {
         var p = Pose()
-        p.rootPitch = -.pi / 2
+        p.rootPitch = -Float.pi / 2
         p.rootY = 0.11
         p.shoulderL = V3(0, 0, 0.22)
         p.shoulderR = V3(0, 0, -0.22)

@@ -45,7 +45,7 @@ final class MeadowStage: Stage3D {
             pool = SCNNode(SCNPlane(width: 2, height: 2),
                            Materials.glowImage(Textures.softDot, color: UIColor(red: 1, green: 0.85, blue: 0.55, alpha: 1),
                                                intensity: 0.6))
-            pool.eulerAngles.x = -.pi / 2
+            pool.eulerAngles.x = -Float.pi / 2
             pool.simdPosition = V3(0, 0.05, 0)
             pool.castsShadow = false
             node.addChildNode(pool)
@@ -63,8 +63,8 @@ final class MeadowStage: Stage3D {
             pool.simdScale = V3(radius * 1.3, radius * 1.3, 1)
             node.opacity = CGFloat(strength)
             lamp.light?.intensity = CGFloat(strength * 9000)
-            lamp.light?.spotOuterAngle = CGFloat(atan(radius / 40) * 180 / .pi * 2.4)
-            lamp.light?.spotInnerAngle = CGFloat(atan(radius / 40) * 180 / .pi * 1.6)
+            lamp.light?.spotOuterAngle = CGFloat(atan(radius / 40) * 180 / Float.pi * 2.4)
+            lamp.light?.spotInnerAngle = CGFloat(atan(radius / 40) * 180 / Float.pi * 1.6)
         }
     }
 
@@ -94,14 +94,14 @@ final class MeadowStage: Stage3D {
         root.addChildNode(Nature.grassField(radius: 21, count: 52_000, seed: 3, height: 0.25...0.62))
         root.addChildNode(Nature.flowers(radius: 20, count: 2600, seed: 4))
         root.addChildNode(Nature.forestRing(inner: 23.5, outer: 80, count: 640, seed: 21, heights: 16...30,
-                                            broadleafShare: 0.35, corridor: (angle: .pi, width: 2.6)))
+                                            broadleafShare: 0.35, corridor: (angle: Float.pi, width: 2.6)))
         root.addChildNode(Nature.rocks(count: 18, seed: 8) { r in
-            let a = r.x * 2 * .pi, d = 19 + r.y * 6
+            let a = r.x * 2 * Float.pi, d = 19 + r.y * 6
             return V3(sin(a) * d, 0, cos(a) * d)
         })
         // Тропинка через лес.
         let trail = SCNNode(SCNPlane(width: 2.2, height: 60), Materials.dirt(tile: 8))
-        trail.eulerAngles.x = -.pi / 2
+        trail.eulerAngles.x = -Float.pi / 2
         trail.simdPosition = V3(0, 0.012, -50)
         root.addChildNode(trail)
 
@@ -221,16 +221,16 @@ final class MeadowStage: Stage3D {
         case .edwardHesitates:
             heroBeam.set(x: 2.2, radius: 1.4, strength: 1)
             heroBeam.node.simdPosition = V3(2.2, 0, -17.2)
-            edward.place(V3(3, 0, -21.2), yaw: .pi - 0.3)
+            edward.place(V3(3, 0, -21.2), yaw: Float.pi - 0.3)
             edward.snap(.stand)
-            bella.place(V3(0.4, 0, -14.6), yaw: -.pi + 0.5)
+            bella.place(V3(0.4, 0, -14.6), yaw: -Float.pi + 0.5)
             bella.snap(.stand)
             edward.lookAt = bella.head.simdWorldPosition
             bella.lookAt = edward.head.simdWorldPosition
         case .edwardSteps:
             heroBeam.set(x: 2.2, radius: 1.4, strength: 1)
             heroBeam.node.simdPosition = V3(2.2, 0, -17.2)
-            bella.place(V3(0.4, 0, -14.6), yaw: -.pi + 0.5)
+            bella.place(V3(0.4, 0, -14.6), yaw: -Float.pi + 0.5)
             bella.snap(.stand)
         case .cloudsMove:
             beams[0].set(x: -6, radius: 1.3, strength: 1)
@@ -240,9 +240,9 @@ final class MeadowStage: Stage3D {
             edward.place(V3(0, 0, 0), yaw: 0)
             edward.snap(.stand)
         case .meadowLying, .meadowLyingClose, .meadowSunset:
-            bella.place(V3(-1.55, 0, 0.32), yaw: -.pi / 2)
+            bella.place(V3(-1.55, 0, 0.32), yaw: -Float.pi / 2)
             bella.snap(.lieBack)
-            edward.place(V3(1.75, 0, -0.32), yaw: .pi / 2)
+            edward.place(V3(1.75, 0, -0.32), yaw: Float.pi / 2)
             edward.snap(.lieBack)
             if cue == .meadowSunset {
                 setKey(color: UIColor(red: 1, green: 0.62, blue: 0.35, alpha: 1), intensity: 260)
@@ -281,7 +281,7 @@ final class MeadowStage: Stage3D {
             let t = easeSoft(min(1, p * 1.5))
             let pos = mixv(V3(3, 0, -21.2), V3(2.2, 0, -17.4), t)
             walkPhase += dt * 4 * (t < 1 ? 1 : 0)
-            edward.place(pos, yaw: .pi - 0.3 + t * 0.3)
+            edward.place(pos, yaw: Float.pi - 0.3 + t * 0.3)
             edward.target = t < 1 ? Pose.walk(walkPhase, stride: 0.6) : .stand
             edward.rate = 14
             edward.lookAt = bella.head.simdWorldPosition

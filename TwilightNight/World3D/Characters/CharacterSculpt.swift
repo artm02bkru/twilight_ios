@@ -55,7 +55,7 @@ enum CharacterSculpt {
         ell(.hips, V3(-0.068, -0.075, -0.045), V3(0.075, 0.085, 0.07), bottom, blend: 0.03)
 
         // Живот и талия.
-        ell(.spine, V3(0, 0.045, 0.006), V3((f ? 0.122 : 0.138) * w, 0.15, 0.1), top, blend: 0.05)
+        ell(.spine, V3(0, 0.045, f ? 0.006 : -0.004), V3((f ? 0.122 : 0.132) * w, 0.15, f ? 0.1 : 0.09), top, blend: 0.05)
 
         // Грудная клетка, грудь, трапеции.
         ell(.chest, V3(0, 0.1, 0), V3((f ? 0.152 : 0.178) * w, 0.168, 0.114), top, blend: 0.05)
@@ -135,6 +135,11 @@ enum CharacterSculpt {
         m.ellipsoid(V3(0, 0.088, 0.028), V3(f ? 0.064 : 0.07, 0.07, 0.072), slot: skin, blend: 0.035)
         m.ellipsoid(V3(0, 0.05, 0.032), V3(f ? 0.052 : 0.062, 0.044, 0.062), slot: skin, blend: 0.035)
         m.ellipsoid(V3(0, 0.024, 0.072), V3(f ? 0.021 : 0.026, 0.019, 0.02), slot: skin, blend: 0.022)
+        if !f {
+            // Углы нижней челюсти — более мужской силуэт.
+            m.ellipsoid(V3(0.05, 0.042, 0.004), V3(0.022, 0.026, 0.032), slot: skin, blend: 0.025)
+            m.ellipsoid(V3(-0.05, 0.042, 0.004), V3(0.022, 0.026, 0.032), slot: skin, blend: 0.025)
+        }
         // Скулы и надбровье.
         m.ellipsoid(V3(0.047, 0.094, 0.06), V3(0.026, 0.018, 0.024), slot: skin, blend: 0.025)
         m.ellipsoid(V3(-0.047, 0.094, 0.06), V3(0.026, 0.018, 0.024), slot: skin, blend: 0.025)
@@ -183,7 +188,7 @@ enum CharacterSculpt {
         switch look.hair {
         case .messy:
             for i in 0..<11 {
-                let a = Float(i) / 11 * .pi - .pi / 2
+                let a = Float(i) / 11 * Float.pi - Float.pi / 2
                 m.ellipsoid(V3(sin(a) * 0.06, 0.21 + rng.range(-0.008, 0.016), 0.005 + cos(a) * 0.045),
                             V3(0.04, 0.026, 0.058),
                             rotation: V3(rng.range(-0.7, -0.2), rng.range(-0.6, 0.6), rng.range(-0.4, 0.4)),
@@ -210,7 +215,7 @@ enum CharacterSculpt {
 
         case .spiky:
             for i in 0..<16 {
-                let a = Float(i) / 16 * .pi * 2
+                let a = Float(i) / 16 * Float.pi * 2
                 let base = V3(cos(a) * 0.07, 0.17 + rng.range(-0.02, 0.03), -0.02 + sin(a) * 0.07)
                 let tip = base + V3(cos(a) * 0.05, rng.range(0.0, 0.04), sin(a) * 0.05)
                 m.capsule(base, tip, 0.022, 0.004, slot: 0, blend: 0.01)
@@ -218,7 +223,7 @@ enum CharacterSculpt {
 
         case .curly:
             for _ in 0..<40 {
-                let a = rng.range(0, .pi * 2)
+                let a = rng.range(0, Float.pi * 2)
                 let e = rng.range(0.1, 1.4)
                 let p = V3(cos(a) * cos(e) * 0.104, 0.135 + sin(e) * 0.1, sin(a) * cos(e) * 0.106 - 0.025)
                 if p.z > 0.05 && p.y < 0.17 { continue }
@@ -235,7 +240,7 @@ enum CharacterSculpt {
 
         case .wild:
             for _ in 0..<34 {
-                let a = rng.range(0, .pi * 2)
+                let a = rng.range(0, Float.pi * 2)
                 let e = rng.range(-0.8, 1.2)
                 let r = rng.range(0.11, 0.17)
                 let p = V3(cos(a) * cos(e) * r, 0.12 + sin(e) * r * 0.8, sin(a) * cos(e) * r - 0.045)
@@ -245,7 +250,7 @@ enum CharacterSculpt {
 
         case .dreads:
             for i in 0..<18 {
-                let a = Float(i) / 18 * .pi * 1.6 + .pi * 0.7
+                let a = Float(i) / 18 * Float.pi * 1.6 + Float.pi * 0.7
                 let top = V3(sin(a) * 0.095, 0.12, cos(a) * 0.095 - 0.015)
                 let bottom = top + V3(sin(a) * 0.04, -0.3, cos(a) * 0.03)
                 m.capsule(top, bottom, 0.013, 0.011, slot: 0, blend: 0.008)
@@ -261,24 +266,32 @@ enum CharacterSculpt {
     static func hand(side: Float, female: Bool) -> SDFModel {
         let m = SDFModel()
         let s: Float = female ? 0.92 : 1
-        m.capsule(V3(0, 0.03, 0), V3(0, -0.012, 0), 0.027 * s, 0.03 * s, slot: 0, blend: 0.01)
-        m.box(V3(0, -0.05, 0) * s, V3(0.014, 0.041, 0.036) * s, round: 0.011 * s, slot: 0, blend: 0.012)
+        // Запястье (уходит в манжету), ладонь, пясть.
+        m.capsule(V3(0, 0.03, 0) * s, V3(0, -0.01, 0) * s, 0.026 * s, 0.028 * s, slot: 0, blend: 0.01)
+        m.ellipsoid(V3(0, -0.048, 0) * s, V3(0.015, 0.042, 0.038) * s, slot: 0, blend: 0.02)
+        m.box(V3(0, -0.055, 0) * s, V3(0.006, 0.026, 0.026) * s, round: 0.01 * s, slot: 0, blend: 0.015)
 
-        let lengths: [Float] = [0.075, 0.083, 0.078, 0.063]
-        let zs: [Float] = [0.026, 0.009, -0.009, -0.025]
+        // Четыре пальца по три фаланги, с естественным изгибом к ладони.
+        let lengths: [Float] = [0.085, 0.095, 0.09, 0.072]
+        let zs: [Float] = [0.024, 0.008, -0.008, -0.023]
         for i in 0..<4 {
-            let knuckle = V3(-side * 0.002, -0.088, zs[i]) * s
-            let len = lengths[i] * s
-            let mid = knuckle + V3(-side * 0.008, -len * 0.5, 0)
-            let tip = mid + V3(-side * 0.018, -len * 0.45, zs[i] * 0.05)
-            m.capsule(knuckle, mid, 0.0098 * s, 0.0088 * s, slot: 0, blend: 0.005)
-            m.capsule(mid, tip, 0.0088 * s, 0.0075 * s, slot: 0, blend: 0.004)
+            let len = lengths[i]
+            let knuckle = V3(-side * 0.002, -0.083, zs[i])
+            let a = knuckle + V3(-side * 0.006, -len * 0.45, 0)
+            let b = a + V3(-side * 0.01, -len * 0.3, 0)
+            let c = b + V3(-side * 0.012, -len * 0.22, zs[i] * 0.04)
+            m.capsule(knuckle * s, a * s, 0.0092 * s, 0.0085 * s, slot: 0, blend: 0.008)
+            m.capsule(a * s, b * s, 0.0085 * s, 0.0078 * s, slot: 0, blend: 0.004)
+            m.capsule(b * s, c * s, 0.0078 * s, 0.0068 * s, slot: 0, blend: 0.003)
         }
-        let t0 = V3(-side * 0.008, -0.028, 0.03) * s
-        let t1 = V3(-side * 0.02, -0.062, 0.05) * s
-        let t2 = V3(-side * 0.027, -0.088, 0.054) * s
-        m.capsule(t0, t1, 0.013 * s, 0.011 * s, slot: 0, blend: 0.01)
-        m.capsule(t1, t2, 0.011 * s, 0.0085 * s, slot: 0, blend: 0.005)
+        // Большой палец.
+        let t0 = V3(-side * 0.006, -0.025, 0.026)
+        let t1 = V3(-side * 0.016, -0.052, 0.045)
+        let t2 = V3(-side * 0.026, -0.074, 0.052)
+        let t3 = V3(-side * 0.033, -0.092, 0.052)
+        m.capsule(t0 * s, t1 * s, 0.0125 * s, 0.0105 * s, slot: 0, blend: 0.012)
+        m.capsule(t1 * s, t2 * s, 0.0105 * s, 0.0088 * s, slot: 0, blend: 0.004)
+        m.capsule(t2 * s, t3 * s, 0.0088 * s, 0.0075 * s, slot: 0, blend: 0.003)
         return m
     }
 
