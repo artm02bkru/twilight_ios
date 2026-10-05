@@ -12,7 +12,7 @@ struct MeadowScene {
         var born: Double
     }
 
-    static let duration: Double = 21
+    static let duration: Double = 42
 
     var edwardX: CGFloat = 0.5
     var targetX: CGFloat = 0.5
@@ -26,9 +26,11 @@ struct MeadowScene {
     var glitter: Double = 0
     var finished = false
     var hurtFlash: Double = 0
+    private var difficulty: CGFloat = 1
 
-    mutating func start() {
+    mutating func start(difficulty: CGFloat = 1) {
         self = MeadowScene()
+        self.difficulty = difficulty
         spawnTimer = 0.4
     }
 
@@ -45,13 +47,15 @@ struct MeadowScene {
         spawnTimer -= Double(ctx.dt)
         if spawnTimer <= 0 {
             let fromLeft = Bool.random()
+            // Чем дольше на лугу, тем чаще расходятся облака.
+            let ramp = CGFloat(min(1, ctx.time / Self.duration))
             beams.append(Beam(
                 x: fromLeft ? -0.25 : 1.25,
-                half: CGFloat.random(in: 0.055...0.095),
-                speed: (fromLeft ? 1 : -1) * CGFloat.random(in: 0.11...0.20),
+                half: CGFloat.random(in: 0.055...0.09) * (0.9 + ramp * 0.25),
+                speed: (fromLeft ? 1 : -1) * CGFloat.random(in: 0.10...0.18) * difficulty * (0.85 + ramp * 0.35),
                 born: ctx.time
             ))
-            spawnTimer = Double.random(in: 1.1...2.1)
+            spawnTimer = Double.random(in: 1.3...2.3) / Double(difficulty) / Double(0.8 + ramp * 0.4)
         }
 
         for index in beams.indices {
@@ -63,7 +67,7 @@ struct MeadowScene {
         let inSun = beams.contains { abs($0.x - edwardX) < $0.half + 0.028 }
 
         if inSun {
-            exposure += Double(ctx.dt) * 0.62
+            exposure += Double(ctx.dt) * 0.55 * Double(difficulty)
             sparkTimer = 0
             if exposure >= 1 {
                 exposure = 0

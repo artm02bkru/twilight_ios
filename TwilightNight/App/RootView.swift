@@ -41,6 +41,7 @@ struct RootView: View {
 
                 if engine.phase == .playing {
                     BannerLayer(engine: engine)
+                    miniGameOverlay
                 }
 
                 if engine.phase == .playing || engine.phase == .paused {
@@ -83,6 +84,17 @@ struct RootView: View {
             @unknown default:
                 break
             }
+        }
+    }
+
+    /// Интерфейс мини-игр поверх сцены.
+    @ViewBuilder
+    private var miniGameOverlay: some View {
+        switch engine.chapter {
+        case .biology: BiologyOverlay(engine: engine)
+        case .prom:    RhythmOverlay(engine: engine)
+        case .wedding: WeddingOverlay(engine: engine)
+        default:       EmptyView()
         }
     }
 

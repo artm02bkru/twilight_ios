@@ -27,8 +27,8 @@ final class WorldDirector: ObservableObject {
         view.isUserInteractionEnabled = false
         self.view = view
 
-        // Сначала дорога (её видно в меню), остальные площадки — следом, в фоне.
-        for id in [StageID.road, .van, .meadow, .baseball, .studio, .finale] {
+        // Сначала меню, затем пролог и первая глава — остальные по мере сюжета.
+        for id in [StageID.menu, .road, .classroom] {
             request(id)
         }
     }
@@ -55,12 +55,39 @@ final class WorldDirector: ObservableObject {
 
     private static func make(_ id: StageID) -> Stage3D {
         switch id {
-        case .road:     return RoadStage()
-        case .van:      return VanStage()
-        case .meadow:   return MeadowStage()
-        case .baseball: return BaseballStage()
-        case .studio:   return StudioStage()
-        case .finale:   return FinaleStage()
+        case .menu:      return MenuStage()
+        case .road:      return RoadStage()
+        case .classroom: return ClassroomStage()
+        case .van:       return VanStage()
+        case .street:    return StreetStage()
+        case .meadow:    return MeadowStage()
+        case .forestRun: return ForestRunStage()
+        case .baseball:  return BaseballStage()
+        case .chase:     return ChaseStage()
+        case .studio:    return StudioStage()
+        case .finale:    return FinaleStage()
+        case .wedding:   return WeddingStage()
+        }
+    }
+
+    /// Какие площадки держать в памяти: текущую, следующую по сюжету и меню.
+    private func wanted(for engine: GameEngine) -> Set<StageID> {
+        var set: Set<StageID> = [engine.stageID, .menu, engine.chapter.stage]
+        if let next = Chapter(rawValue: engine.chapter.rawValue + 1) { set.insert(next.stage) }
+        if engine.phase == .menu {
+            set.insert(.road)
+            set.insert(engine.savedChapter?.stage ?? .classroom)
+        }
+        if engine.chapter == .wedding || engine.chapter == .prom { set.insert(.wedding) }
+        return set
+    }
+
+    /// Подгрузить нужное заранее и выгрузить лишнее.
+    private func manageMemory(_ engine: GameEngine) {
+        let want = wanted(for: engine)
+        for id in want where stages[id] == nil { request(id) }
+        for id in Array(stages.keys) where !want.contains(id) && id != current {
+            stages[id] = nil
         }
     }
 
@@ -68,7 +95,14 @@ final class WorldDirector: ObservableObject {
 
     // MARK: - Кадр
 
+    private var memoryTimer: CGFloat = 0
+
     func tick(_ engine: GameEngine, dt: CGFloat) {
+        memoryTimer -= dt
+        if memoryTimer <= 0 {
+            memoryTimer = 1
+            manageMemory(engine)
+        }
         let id = engine.stageID
         // Площадка ещё строится — остаёмся на прежней.
         guard let stage = request(id) else {

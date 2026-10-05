@@ -5,7 +5,7 @@ import SwiftUI
 /// Тихий удар слышно на весь лес, и кочевники подходят ближе.
 struct BaseballScene {
 
-    static let beats = 5
+    static let beats = 8
     static let noiseLimit = 3
 
     enum Stage { case waiting, flight, resolving }
@@ -33,15 +33,18 @@ struct BaseballScene {
     static let strikeLow: CGFloat = 0.52
     static let strikeHigh: CGFloat = 1.02
 
-    mutating func start() {
+    private var difficulty: CGFloat = 1
+
+    mutating func start(difficulty: CGFloat = 1) {
         self = BaseballScene()
+        self.difficulty = difficulty
         thunderPhase = 0.6
         beginBeat()
     }
 
     private mutating func beginBeat() {
         ballT = -0.35
-        ballSpeed = 0.60 + CGFloat(beat) * 0.075
+        ballSpeed = (0.55 + CGFloat(beat) * 0.045) * difficulty
         stage = .waiting
         timer = 0.55
         quality = nil

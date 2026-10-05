@@ -55,6 +55,9 @@ final class Humanoid {
 
     private let skin: SCNMaterial
     private let iris: SCNMaterial
+    /// Материалы одежды — для перекраски (свадебные наряды).
+    private var topMaterial: SCNMaterial?
+    private var bottomMaterial: SCNMaterial?
     private var sparkleSystems: [SCNParticleSystem] = []
     /// Веки для моргания.
     private var lids: [SCNNode] = []
@@ -163,7 +166,7 @@ final class Humanoid {
     // MARK: Кожа тела со скиннингом
 
     private var meshKey: String {
-        "\(look.name)-\(look.female)-\(look.build)-\(look.skirt)\(look.longSkirt)\(look.coat)\(look.legCast)\(look.collar)\(look.bowTie)"
+        "\(look.name)-\(look.female)-\(look.build)-\(look.skirt)\(look.longSkirt)\(look.coat)\(look.legCast)\(look.collar)\(look.bowTie)-\(look.skirtFlare ?? 0)"
     }
 
     private func buildSkin() {
@@ -186,6 +189,8 @@ final class Humanoid {
         let plaster = Materials.pbr(UIColor(white: 0.93, alpha: 1), roughness: 0.9)
         let shirt = Materials.cloth(.white, roughness: 0.55)
         let tie = Materials.cloth(UIColor(white: 0.03, alpha: 1), roughness: 0.35, sheen: true)
+        topMaterial = top
+        bottomMaterial = bottom
         let geometry = mesh.geometry(materials: [skin, top, bottom, plaster, shirt, tie])
 
         let skinned = SCNNode(geometry: geometry)
@@ -344,6 +349,12 @@ final class Humanoid {
         for ps in sparkleSystems {
             ps.birthRate = CGFloat(value * 70)
         }
+    }
+
+    /// Перекрасить одежду (платье, костюм) без пересборки сетки.
+    func setOutfit(top: UIColor, bottom: UIColor? = nil) {
+        topMaterial?.diffuse.contents = top
+        bottomMaterial?.diffuse.contents = bottom ?? top
     }
 
     /// Свечение глаз (жажда — красным).

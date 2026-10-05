@@ -110,7 +110,7 @@ enum CharacterSculpt {
         // Юбка или платье — объём вокруг ног.
         if look.skirt {
             let len: Float = look.longSkirt ? 0.84 : 0.46
-            let flare: Float = look.longSkirt ? 0.36 : 0.27
+            let flare: Float = look.skirtFlare ?? (look.longSkirt ? 0.36 : 0.27)
             caps(.hips, V3(0, 0.03, 0), V3(0, -len, 0), 0.168, flare, bottom, blend: 0.03)
         }
         // Полы пальто.

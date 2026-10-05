@@ -344,6 +344,127 @@ struct Pose {
         return p
     }()
 
+    /// Сидит на высоком лабораторном табурете, руки на столе.
+    static let sitChair: Pose = {
+        var p = Pose()
+        p.rootY = -0.3
+        p.hipL = V3(-1.5, 0, 0.06)
+        p.hipR = V3(-1.5, 0, -0.06)
+        p.kneeL = 1.35
+        p.kneeR = 1.5
+        p.spine = V3(0.12, 0, 0)
+        p.head = V3(0.1, 0, 0)
+        p.shoulderL = V3(-0.75, 0, 0.12)
+        p.shoulderR = V3(-0.75, 0, -0.12)
+        p.elbowL = -1.15
+        p.elbowR = -1.15
+        return p
+    }()
+
+    /// Сидит и смотрит в окуляр микроскопа.
+    static let sitMicroscope: Pose = {
+        var p = sitChair
+        p.spine = V3(0.42, 0, 0)
+        p.chest = V3(0.15, 0, 0)
+        p.head = V3(0.3, 0, 0)
+        p.shoulderL = V3(-1.0, 0, 0.2)
+        p.shoulderR = V3(-0.9, 0, -0.25)
+        p.elbowL = -1.5
+        p.elbowR = -1.3
+        return p
+    }()
+
+    /// Сидит, отстранившись и скрестив руки.
+    static let sitAloof: Pose = {
+        var p = sitChair
+        p.spine = V3(-0.05, 0.25, 0)
+        p.head = V3(0.05, -0.35, 0)
+        p.shoulderL = V3(-0.7, 0, -0.35)
+        p.shoulderR = V3(-0.7, 0, 0.35)
+        p.elbowL = -1.7
+        p.elbowR = -1.7
+        return p
+    }()
+
+    /// Бег. phase — фаза цикла в радианах.
+    static func run(_ phase: Float, power: Float = 1) -> Pose {
+        var p = Pose()
+        let s = sin(phase), c = cos(phase)
+        p.hipL = V3(-s * 0.85 * power - 0.15, 0, 0.04)
+        p.hipR = V3(s * 0.85 * power - 0.15, 0, -0.04)
+        p.kneeL = (max(0, c) * 1.6 + 0.25) * power
+        p.kneeR = (max(0, -c) * 1.6 + 0.25) * power
+        p.shoulderL = V3(s * 0.75 * power, 0, 0.1)
+        p.shoulderR = V3(-s * 0.75 * power, 0, -0.1)
+        p.elbowL = -1.4
+        p.elbowR = -1.4
+        p.spine = V3(0.22 * power, 0, 0)
+        p.chest = V3(0.04, -s * 0.15 * power, 0)
+        p.head = V3(-0.12 * power, 0, 0)
+        p.rootY = -abs(c) * 0.06 * power - 0.04
+        p.hips = V3(0, s * 0.12 * power, 0)
+        return p
+    }
+
+    /// Белла на спине у Эдварда: обхватила ногами и руками.
+    static let piggyback: Pose = {
+        var p = Pose()
+        p.hipL = V3(-1.25, 0, 0.45)
+        p.hipR = V3(-1.25, 0, -0.45)
+        p.kneeL = 1.6
+        p.kneeR = 1.6
+        p.spine = V3(0.25, 0, 0)
+        p.head = V3(0.2, 0.35, 0)
+        p.shoulderL = V3(-1.5, 0, -0.25)
+        p.shoulderR = V3(-1.5, 0, 0.25)
+        p.elbowL = -1.3
+        p.elbowR = -1.3
+        return p
+    }()
+
+    /// Эдвард бежит, придерживая Беллу за ноги.
+    static func carryRun(_ phase: Float) -> Pose {
+        var p = run(phase, power: 0.85)
+        p.shoulderL = V3(0.35, 0, 0.3)
+        p.shoulderR = V3(0.35, 0, -0.3)
+        p.elbowL = -1.2
+        p.elbowR = -1.2
+        return p
+    }
+
+    /// Держит букет двумя руками перед собой.
+    static let holdBouquet: Pose = {
+        var p = Pose()
+        p.shoulderL = V3(-0.55, 0, -0.18)
+        p.shoulderR = V3(-0.55, 0, 0.18)
+        p.elbowL = -1.25
+        p.elbowR = -1.25
+        p.head = V3(0.08, 0, 0)
+        return p
+    }()
+
+    /// Держит яблоко в ладонях (обложка книги).
+    static let holdApple: Pose = {
+        var p = Pose()
+        p.shoulderL = V3(-0.6, 0, -0.08)
+        p.shoulderR = V3(-0.6, 0, 0.08)
+        p.elbowL = -1.45
+        p.elbowR = -1.45
+        p.wristL = V3(0.2, 0, 0)
+        p.wristR = V3(0.2, 0, 0)
+        p.head = V3(0.15, 0, 0)
+        return p
+    }()
+
+    /// Ведёт под руку (Чарли у алтаря).
+    static let escort: Pose = {
+        var p = Pose()
+        p.shoulderL = V3(-0.25, 0, 0.12)
+        p.elbowL = -1.4
+        p.head = V3(0.05, 0, 0)
+        return p
+    }()
+
     /// Шаг ходьбы. phase — фаза цикла в радианах, stride — 0...1.
     static func walk(_ phase: Float, stride: Float = 1) -> Pose {
         var p = Pose()

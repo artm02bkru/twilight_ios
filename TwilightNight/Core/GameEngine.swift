@@ -1,16 +1,16 @@
 import SwiftUI
 import UIKit
 
-/// Дирижёр всей книги: ведёт главы, считает очки, жизни и рекорд,
-/// а ввод передаёт активной сцене.
+/// Дирижёр всей книги: ведёт главы и кат-сцены, считает очки, жизни и рекорд,
+/// хранит прогресс и настройки, а ввод передаёт активной сцене.
 final class GameEngine: ObservableObject {
 
     // MARK: - Публичное состояние
 
-    /// Растёт каждый кадр — заставляет Canvas перерисоваться.
+    /// Растёт каждый кадр — заставляет HUD обновиться.
     @Published private(set) var revision: UInt64 = 0
     @Published private(set) var phase: GamePhase = .menu
-    @Published private(set) var chapter: Chapter = .van
+    @Published private(set) var chapter: Chapter = .biology
     @Published private(set) var score: Int = 0
     @Published private(set) var lives: Int = 3
     @Published private(set) var chapterScore: Int = 0
@@ -19,15 +19,30 @@ final class GameEngine: ObservableObject {
     /// Текущая кат-сцена (только в фазе `.cutscene`).
     @Published private(set) var cutscene: CutscenePlayback? = nil
 
+    /// Сложность (запоминается между запусками).
+    @Published var difficulty: Difficulty {
+        didSet { UserDefaults.standard.set(difficulty.rawValue, forKey: Keys.difficulty) }
+    }
+    /// До какой главы игрок уже дошёл (открыта для выбора).
+    @Published private(set) var unlocked: Int
+    /// Сохранённая точка для «Продолжить».
+    @Published private(set) var savedChapter: Chapter?
+
     static let startLives = 3
     static let maxLives = 5
 
     // MARK: - Состояние сцен (читается рендером напрямую)
 
+    private(set) var biology = BiologyScene()
     private(set) var van = VanScene()
+    private(set) var portAngeles = RunnerScene(kind: .street)
     private(set) var meadow = MeadowScene()
+    private(set) var forest = RunnerScene(kind: .forest)
     private(set) var baseball = BaseballScene()
+    private(set) var chase = RunnerScene(kind: .chase)
     private(set) var studio = StudioScene()
+    private(set) var prom = DanceScene()
+    private(set) var wedding = WeddingScene()
 
     // MARK: - Общие эффекты
 
@@ -43,17 +58,34 @@ final class GameEngine: ObservableObject {
     private var dragActive = false
     private var touchX: CGFloat = 0.5
     private var pendingTap: CGPoint? = nil
+    private var pendingChoice: Int? = nil
+    private var pendingConfirm = false
     private var aspect: CGFloat = 0.75
+    private var chapterStartScore = 0
 
     private enum Keys {
         static let best = "twilight.book.best"
+        static let difficulty = "twilight.difficulty"
+        static let unlocked = "twilight.unlocked"
+        static let savedChapter = "twilight.save.chapter"
+        static let savedScore = "twilight.save.score"
+        static let savedLives = "twilight.save.lives"
     }
 
     private var lightHaptics = UIImpactFeedbackGenerator(style: .light)
     private var heavyHaptics = UIImpactFeedbackGenerator(style: .heavy)
 
     init() {
-        best = UserDefaults.standard.integer(forKey: Keys.best)
+        let defaults = UserDefaults.standard
+        best = defaults.integer(forKey: Keys.best)
+        difficulty = Difficulty(rawValue: defaults.integer(forKey: Keys.difficulty)) ?? .normal
+        if defaults.object(forKey: Keys.difficulty) == nil { difficulty = .normal }
+        unlocked = defaults.integer(forKey: Keys.unlocked)
+        if defaults.object(forKey: Keys.savedChapter) != nil {
+            savedChapter = Chapter(rawValue: defaults.integer(forKey: Keys.savedChapter))
+        } else {
+            savedChapter = nil
+        }
     }
 
     // MARK: - Управление потоком
@@ -63,33 +95,65 @@ final class GameEngine: ObservableObject {
         aspect = value
     }
 
-    /// Новая партия: начинаем с первой главы.
+    /// Новая партия: пролог и первая глава.
     func newRun() {
-        score = 0
-        lives = Self.startLives
-        chapter = .van
+        resetRun(score: 0, lives: Self.startLives)
+        chapter = .biology
+        playCutscene(.prologue)
+    }
+
+    /// Продолжить с сохранённой главы.
+    func continueRun() {
+        let defaults = UserDefaults.standard
+        guard let saved = savedChapter else { newRun(); return }
+        resetRun(score: defaults.integer(forKey: Keys.savedScore),
+                 lives: max(1, defaults.integer(forKey: Keys.savedLives)))
+        chapter = saved
+        playCutscene(.intro(saved))
+    }
+
+    /// Начать с любой открытой главы (очки с нуля).
+    func startFrom(_ target: Chapter) {
+        guard target.rawValue <= unlocked else { return }
+        resetRun(score: 0, lives: Self.startLives)
+        chapter = target
+        playCutscene(.intro(target))
+    }
+
+    private func resetRun(score: Int, lives: Int) {
+        self.score = score
+        self.lives = lives
         banners = []
         result = nil
         touching = false
         pendingTap = nil
+        pendingChoice = nil
         lightHaptics.prepare()
         heavyHaptics.prepare()
-        playCutscene(.prologue)
     }
 
     /// Игрок нажал «начать главу» на карточке.
     func beginChapter() {
         sceneTime = 0
         chapterScore = 0
+        chapterStartScore = score
         banners = []
         touching = false
         pendingTap = nil
+        pendingChoice = nil
 
+        let d = difficulty.factor
         switch chapter {
-        case .van:      van.start()
-        case .meadow:   meadow.start()
-        case .baseball: baseball.start()
-        case .studio:   studio.start()
+        case .biology:     biology.start(difficulty: d)
+        case .van:         van.start(difficulty: d)
+        case .portAngeles: portAngeles.start(difficulty: d)
+        case .meadow:      meadow.start(difficulty: d)
+        case .forest:      forest.start(difficulty: d)
+        case .baseball:    baseball.start(difficulty: d)
+        case .chase:       chase.start(difficulty: d)
+        case .studio:      studio.start(difficulty: d)
+        case .prom:        prom.start(difficulty: d)
+        case .wedding:     wedding.start(difficulty: d)
         }
 
         phase = .playing
@@ -100,11 +164,23 @@ final class GameEngine: ObservableObject {
         if let next = Chapter(rawValue: chapter.rawValue + 1) {
             chapter = next
             result = nil
+            // Новая глава — немного сил: одна жизнь возвращается.
+            lives = min(Self.maxLives, lives + 1)
+            save(next)
             playCutscene(.intro(next))
         } else {
             saveBest(score)
+            clearSave()
             playCutscene(.finale)
         }
+    }
+
+    /// После поражения — переиграть главу с теми очками, что были на её начале.
+    func retryChapter() {
+        guard phase == .gameOver else { return }
+        score = chapterStartScore
+        lives = Self.startLives
+        phase = .chapterCard
     }
 
     // MARK: - Кат-сцены
@@ -162,7 +238,7 @@ final class GameEngine: ObservableObject {
         cutscene = nil
         switch id {
         case .prologue:
-            playCutscene(.intro(.van))
+            playCutscene(.intro(.biology))
         case .intro:
             phase = .chapterCard
         case .outro:
@@ -176,11 +252,11 @@ final class GameEngine: ObservableObject {
     var stageID: StageID {
         switch phase {
         case .menu:
-            return .road
+            return .menu
         case .cutscene:
             return cutscene?.script.id.stage ?? chapter.stage
         case .finale:
-            return .finale
+            return .wedding
         default:
             return chapter.stage
         }
@@ -201,6 +277,7 @@ final class GameEngine: ObservableObject {
     /// Переиграть текущую главу с начала.
     func restartChapter() {
         guard phase == .paused else { return }
+        score = chapterStartScore
         beginChapter()
     }
 
@@ -210,6 +287,27 @@ final class GameEngine: ObservableObject {
         touching = false
         dragActive = false
         pendingTap = nil
+    }
+
+    // MARK: - Сохранение
+
+    private func save(_ next: Chapter) {
+        let defaults = UserDefaults.standard
+        defaults.set(next.rawValue, forKey: Keys.savedChapter)
+        defaults.set(score, forKey: Keys.savedScore)
+        defaults.set(lives, forKey: Keys.savedLives)
+        savedChapter = next
+        if next.rawValue > unlocked {
+            unlocked = next.rawValue
+            defaults.set(unlocked, forKey: Keys.unlocked)
+        }
+    }
+
+    private func clearSave() {
+        UserDefaults.standard.removeObject(forKey: Keys.savedChapter)
+        savedChapter = nil
+        unlocked = Chapter.allCases.count - 1
+        UserDefaults.standard.set(unlocked, forKey: Keys.unlocked)
     }
 
     // MARK: - Ввод от вида
@@ -252,6 +350,20 @@ final class GameEngine: ObservableObject {
     /// Палец на экране — для 3D-сцены (Эдвард склоняется к ране, пока игрок держит).
     var isHolding: Bool { touching }
 
+    /// Ответ в викторине или выбор варианта на свадьбе.
+    func choose(_ index: Int) {
+        guard phase == .playing else { return }
+        pendingChoice = index
+        // Свадебный выбор виден сразу, не дожидаясь кадра.
+        if chapter == .wedding { wedding.select(index) }
+    }
+
+    /// Кнопка «Готово» в свадебном раунде.
+    func confirm() {
+        guard phase == .playing else { return }
+        pendingConfirm = true
+    }
+
     // MARK: - Игровой цикл
 
     func update(dt: CGFloat) {
@@ -275,6 +387,7 @@ final class GameEngine: ObservableObject {
 
         guard phase == .playing else {
             pendingTap = nil
+            pendingChoice = nil
             return
         }
 
@@ -286,16 +399,27 @@ final class GameEngine: ObservableObject {
             aspect: aspect,
             touchX: touchX,
             touching: touching,
-            tap: pendingTap
+            tap: pendingTap,
+            choice: pendingChoice,
+            confirm: pendingConfirm,
+            difficulty: difficulty.factor
         )
         pendingTap = nil
+        pendingChoice = nil
+        pendingConfirm = false
 
         var outcome = SceneOutcome.none
         switch chapter {
-        case .van:      outcome = van.update(ctx)
-        case .meadow:   outcome = meadow.update(ctx)
-        case .baseball: outcome = baseball.update(ctx)
-        case .studio:   outcome = studio.update(ctx)
+        case .biology:     outcome = biology.update(ctx)
+        case .van:         outcome = van.update(ctx)
+        case .portAngeles: outcome = portAngeles.update(ctx)
+        case .meadow:      outcome = meadow.update(ctx)
+        case .forest:      outcome = forest.update(ctx)
+        case .baseball:    outcome = baseball.update(ctx)
+        case .chase:       outcome = chase.update(ctx)
+        case .studio:      outcome = studio.update(ctx)
+        case .prom:        outcome = prom.update(ctx)
+        case .wedding:     outcome = wedding.update(ctx)
         }
 
         if outcome.score != 0 {
@@ -333,20 +457,23 @@ final class GameEngine: ObservableObject {
             rank: rank,
             note: Self.note(for: chapter)
         )
+        saveBest(score)
         // Сначала развязка главы, потом экран итогов.
         playCutscene(.outro(chapter))
     }
 
     private static func note(for chapter: Chapter) -> String {
         switch chapter {
-        case .van:
-            return "Вмятину на дверце фургона он объяснить не смог."
-        case .meadow:
-            return "«Это просто свет», — сказал он. Ты не поверила."
-        case .baseball:
-            return "Гроза кончилась. Игру пришлось закончить."
-        case .studio:
-            return "Он успел. На этот раз — успел."
+        case .biology:     return "«Мы же партнёры по лабораторной», — сказал он. И впервые улыбнулся."
+        case .van:         return "Вмятину на дверце фургона он объяснить не смог."
+        case .portAngeles: return "Он нашёл её в чужом городе. Как — так и не сказал."
+        case .meadow:      return "«Это просто свет», — сказал он. Ты не поверила."
+        case .forest:      return "Голова кружилась. Не от скорости."
+        case .baseball:    return "Гроза кончилась. Игру пришлось закончить."
+        case .chase:       return "Фары исчезли из зеркала. Но ненадолго."
+        case .studio:      return "Он успел. На этот раз — успел."
+        case .prom:        return "Она танцевала на его ногах. И не упала ни разу."
+        case .wedding:     return "«Ты превзошла саму себя», — сказала Элис. Почти без зависти."
         }
     }
 
@@ -361,27 +488,41 @@ final class GameEngine: ObservableObject {
     /// Прогресс текущей главы, 0...1.
     var chapterProgress: Double {
         switch chapter {
-        case .van:
-            return min(1, Double(van.beat) / Double(VanScene.beats))
-        case .meadow:
-            return min(1, sceneTime / MeadowScene.duration)
-        case .baseball:
-            return min(1, Double(baseball.beat) / Double(BaseballScene.beats))
-        case .studio:
-            return 1 - studio.venom
+        case .biology:     return min(1, Double(biology.slide) / Double(BiologyScene.slides))
+        case .van:         return min(1, Double(van.beat) / Double(VanScene.beats))
+        case .portAngeles: return portAngeles.progress
+        case .meadow:      return min(1, sceneTime / MeadowScene.duration)
+        case .forest:      return forest.progress
+        case .baseball:    return min(1, Double(baseball.beat) / Double(BaseballScene.beats))
+        case .chase:       return chase.progress
+        case .studio:      return 1 - studio.venom
+        case .prom:        return prom.progress
+        case .wedding:     return min(1, Double(wedding.round) / Double(WeddingScene.Category.allCases.count))
         }
     }
 
     var chapterCaption: String {
         switch chapter {
+        case .biology:
+            return "ПРЕПАРАТ \(min(biology.slide + 1, BiologyScene.slides)) / \(BiologyScene.slides)"
         case .van:
             return "ФУРГОН \(min(van.beat + 1, VanScene.beats)) / \(VanScene.beats)"
+        case .portAngeles:
+            return "ДО СВЕТА \(max(0, Int(ceil(portAngeles.duration - portAngeles.time)))) С"
         case .meadow:
             return "ПРОДЕРЖИСЬ \(max(0, Int(ceil(MeadowScene.duration - sceneTime)))) С"
+        case .forest:
+            return "\(Int(forest.speed * 3.6)) КМ/Ч"
         case .baseball:
             return "БРОСОК \(min(baseball.beat + 1, BaseballScene.beats)) / \(BaseballScene.beats)"
+        case .chase:
+            return "\(Int(chase.speed * 3.6)) КМ/Ч · \(max(0, Int(ceil(chase.duration - chase.time)))) С"
         case .studio:
             return "ЯД \(Int(studio.venom * 100))%"
+        case .prom:
+            return "СЕРИЯ \(prom.combo)"
+        case .wedding:
+            return "\(wedding.category.title) · \(max(0, Int(ceil(wedding.timer)))) С"
         }
     }
 }

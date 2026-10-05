@@ -68,80 +68,6 @@ private struct Scrim<Content: View>: View {
     }
 }
 
-// MARK: - Меню
-
-struct MenuOverlay: View {
-
-    @ObservedObject var engine: GameEngine
-
-    var body: some View {
-        Scrim {
-            VStack(spacing: 20) {
-                header
-                chapterList
-                MusicToggleRow()
-                Button("НАЧАТЬ ИСТОРИЮ") {
-                    withAnimation(.easeInOut(duration: 0.25)) { engine.newRun() }
-                }
-                .buttonStyle(TwilightButtonStyle())
-
-                if engine.best > 0 {
-                    Text("Лучший результат: \(engine.best)")
-                        .font(Theme.body(15, weight: .semibold))
-                        .foregroundColor(Theme.textDim)
-                }
-
-                Text("Фанатская мини-игра по мотивам книг «Сумерки».\nПрава на франшизу и на использованный трек принадлежат их правообладателям.")
-                    .font(Theme.body(11, weight: .regular))
-                    .foregroundColor(Theme.textDim.opacity(0.72))
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
-
-    private var header: some View {
-        VStack(spacing: 4) {
-            Text("СУМЕРКИ")
-                .font(Theme.title(58))
-                .foregroundColor(Theme.text)
-                .shadow(color: Theme.blood.opacity(0.9), radius: 24, y: 4)
-                .minimumScaleFactor(0.6)
-                .lineLimit(1)
-            Text("ЧЕТЫРЕ ГЛАВЫ")
-                .font(Theme.body(14, weight: .semibold))
-                .tracking(7)
-                .foregroundColor(Theme.mist)
-        }
-    }
-
-    private var chapterList: some View {
-        TwilightPanel {
-            VStack(spacing: 14) {
-                ForEach(Chapter.allCases) { chapter in
-                    HStack(spacing: 14) {
-                        Image(systemName: chapter.symbol)
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(chapter.accent)
-                            .frame(width: 34)
-
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text("\(chapter.number) · \(chapter.title)")
-                                .font(Theme.body(16, weight: .bold))
-                                .foregroundColor(Theme.text)
-                            Text(chapter.place)
-                                .font(Theme.body(12, weight: .medium))
-                                .foregroundColor(Theme.textDim)
-                        }
-
-                        Spacer(minLength: 0)
-                    }
-                }
-            }
-        }
-    }
-}
-
 // MARK: - Карточка главы
 
 struct ChapterCardOverlay: View {
@@ -289,7 +215,7 @@ struct ChapterResultOverlay: View {
                         .font(Theme.body(13, weight: .semibold))
                         .foregroundColor(Theme.textDim)
 
-                    Button(engine.chapter == .studio ? "СМОТРЕТЬ ФИНАЛ" : "СЛЕДУЮЩАЯ ГЛАВА") {
+                    Button(engine.chapter == .wedding ? "СМОТРЕТЬ СВАДЬБУ" : "СЛЕДУЮЩАЯ ГЛАВА") {
                         withAnimation(.easeInOut(duration: 0.22)) { engine.advanceFromResult() }
                     }
                     .buttonStyle(TwilightButtonStyle(tint: engine.chapter.accent))
@@ -333,8 +259,8 @@ struct GameOverOverlay: View {
                         .foregroundColor(Theme.textDim)
                         .padding(.bottom, 4)
 
-                    Button("ПОПРОБОВАТЬ СНОВА") {
-                        withAnimation(.easeInOut(duration: 0.2)) { engine.newRun() }
+                    Button("ПЕРЕИГРАТЬ ГЛАВУ") {
+                        withAnimation(.easeInOut(duration: 0.2)) { engine.retryChapter() }
                     }
                     .buttonStyle(TwilightButtonStyle())
 
@@ -361,13 +287,13 @@ struct FinaleOverlay: View {
         Scrim {
             TwilightPanel {
                 VStack(spacing: 12) {
-                    Text("ФОРКС ПЕРЕЖИТ")
+                    Text("НАВСЕГДА")
                         .font(Theme.title(32))
                         .foregroundColor(Theme.text)
                         .minimumScaleFactor(0.7)
                         .lineLimit(1)
 
-                    Text("Ты прошла все четыре главы")
+                    Text("История Беллы и Эдварда пройдена")
                         .font(Theme.body(15, weight: .medium))
                         .foregroundColor(Theme.textDim)
 

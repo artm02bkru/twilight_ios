@@ -49,6 +49,8 @@ struct CharacterLook {
     var legCast: Bool = false
     /// Галстук-бабочка (финал).
     var bowTie: Bool = false
+    /// Ширина подола (по умолчанию — 0.36 у длинной юбки, 0.27 у короткой).
+    var skirtFlare: Float? = nil
 }
 
 /// Актёрский состав.
@@ -131,6 +133,80 @@ enum Cast {
         skin: UIColor(hex: 0xF0E2DA), vampire: true, eyes: crimson,
         hair: .wild, hairColor: UIColor(hex: 0xC2461C),
         top: UIColor(hex: 0x3E4A2E), bottom: UIColor(hex: 0x2C2A26))
+
+    // MARK: Второй план
+
+    static let banner = CharacterLook(
+        name: "Мистер Баннер", height: 1.78, build: 1.1,
+        skin: humanSkin, eyes: UIColor(hex: 0x3B4A5A),
+        hair: .slicked, hairColor: UIColor(hex: 0x6A5A48),
+        top: UIColor(hex: 0x8C7A62), bottom: UIColor(hex: 0x3E3A34), coat: true)
+
+    static let mike = CharacterLook(
+        name: "Майк", height: 1.78, build: 1.0,
+        skin: UIColor(hex: 0xEBC4A4), eyes: UIColor(hex: 0x4A6A8A),
+        hair: .messy, hairColor: UIColor(hex: 0xD8B96A),
+        top: UIColor(hex: 0x5A6E8C), bottom: UIColor(hex: 0x2F3B52))
+
+    static let jessica = CharacterLook(
+        name: "Джессика", height: 1.6, build: 0.84, female: true,
+        skin: UIColor(hex: 0xEDC8AE), eyes: UIColor(hex: 0x5A3A22),
+        hair: .wavy, hairColor: UIColor(hex: 0x4A2C1A),
+        top: UIColor(hex: 0xB04A5A), bottom: UIColor(hex: 0x2E3B55))
+
+    static let angela = CharacterLook(
+        name: "Анджела", height: 1.66, build: 0.84, female: true,
+        skin: UIColor(hex: 0xE2B896), eyes: UIColor(hex: 0x3A2A1A),
+        hair: .long, hairColor: UIColor(hex: 0x2A1C14),
+        top: UIColor(hex: 0x6B7A5A), bottom: UIColor(hex: 0x3A3A44))
+
+    static let charlie = CharacterLook(
+        name: "Чарли", height: 1.8, build: 1.08,
+        skin: UIColor(hex: 0xE4B898), eyes: UIColor(hex: 0x4A2E1C),
+        hair: .curly, hairColor: UIColor(hex: 0x3A2A1C),
+        top: UIColor(hex: 0x3A3A40), bottom: UIColor(hex: 0x3A3A40), coat: true)
+
+    static let thugA = CharacterLook(
+        name: "Незнакомец", height: 1.85, build: 1.15,
+        skin: UIColor(hex: 0xD9AE8C), eyes: UIColor(hex: 0x2A2A2A),
+        hair: .slicked, hairColor: UIColor(hex: 0x1A1A1A),
+        top: UIColor(hex: 0x2B2B2B), bottom: UIColor(hex: 0x25272C), coat: true)
+
+    static let thugB = CharacterLook(
+        name: "Второй незнакомец", height: 1.8, build: 1.1,
+        skin: UIColor(hex: 0xC99A78), eyes: UIColor(hex: 0x2A2A2A),
+        hair: .curly, hairColor: UIColor(hex: 0x241A14),
+        top: UIColor(hex: 0x3B3226), bottom: UIColor(hex: 0x2A2A2E))
+
+    /// Свадебное платье: облегающее (шёлк, кружево, атлас, голубое).
+    static let bellaBride: CharacterLook = {
+        var look = bella
+        look.name = "Белла (невеста)"
+        look.top = UIColor(hex: 0xF5EFE2)
+        look.bottom = UIColor(hex: 0xF5EFE2)
+        look.skirt = true
+        look.longSkirt = true
+        look.collar = false
+        return look
+    }()
+
+    /// Свадебное платье-«принцесса» с пышной юбкой.
+    static let bellaPrincess: CharacterLook = {
+        var look = bellaBride
+        look.name = "Белла (принцесса)"
+        look.skirtFlare = 0.58
+        return look
+    }()
+
+    static let edwardGroom: CharacterLook = {
+        var look = edward
+        look.name = "Эдвард (жених)"
+        look.top = UIColor(hex: 0x111114)
+        look.bottom = UIColor(hex: 0x111114)
+        look.bowTie = true
+        look.coat = true
+        return look
+    }()
 
     /// Белла на выпускном: голубое платье и гипс на ноге.
     static let bellaProm: CharacterLook = {

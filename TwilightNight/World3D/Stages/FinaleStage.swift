@@ -124,19 +124,35 @@ final class FinaleStage: Stage3D {
 
     override var ambience: [SoundFX.Ambience: Float] { [.crickets: 0.45, .wind: 0.08] }
 
+    /// Пульс огней в такт музыке (0...1).
+    private var beat: Float = 0
+    private var spin: Float = 0
+    private var spinSpeed: Float = 0.25
+    private var stumble: Float = 0
+
     override func updateAmbient(dt: Float) {
         for h in [bella, edward] { h.update(dt: dt, time: time) }
         for (i, b) in bulbs.enumerated() {
-            b.opacity = CGFloat(0.75 + 0.25 * sin(time * 2 + Float(i) * 1.7))
+            b.opacity = CGFloat(0.7 + 0.2 * sin(time * 2 + Float(i) * 1.7) + 0.4 * beat)
         }
         // Медленный танец: пара кружится и покачивается.
-        dancePivot.simdEulerAngles.y = time * 0.25
+        spin += dt * spinSpeed
+        dancePivot.simdEulerAngles.y = spin
         let sway = sin(time * 1.6) * 0.06
         bella.target.spine = V3(0, 0, sway)
         edward.target.spine = V3(0, 0, -sway)
+        bella.target.rootRoll = stumble * 0.12
+        stumble = max(0, stumble - dt * 2)
+        beat = max(0, beat - dt * 3)
     }
 
     private func layout() {
+        if bella.node.parent !== dancePivot {
+            bella.node.removeFromParentNode()
+            edward.node.removeFromParentNode()
+            dancePivot.addChildNode(bella.node)
+            dancePivot.addChildNode(edward.node)
+        }
         // Белла стоит на ногах Эдварда — он ведёт.
         bella.place(V3(0, 0, 0.17), yaw: Float.pi)
         edward.place(V3(0, 0, -0.17), yaw: 0)
@@ -149,6 +165,34 @@ final class FinaleStage: Stage3D {
     override func enterGameplay() { layout() }
     override func enterIdle() { layout() }
 
+    private var lastJudged = 0
+
+    override func updateGameplay(_ engine: GameEngine, dt: Float) {
+        let s = engine.prom
+        beat = max(beat, Float(s.beatPulse))
+        // Удачные шаги раскручивают пару, промахи сбивают с ритма.
+        let judged = s.steps.filter { $0.judged != nil }.count
+        if judged != lastJudged {
+            lastJudged = judged
+            switch s.lastJudgement {
+            case .perfect?:
+                spinSpeed = min(0.9, spinSpeed + 0.08)
+                SoundFX.shared.play(.chime, volume: 0.35)
+            case .good?:
+                spinSpeed = min(0.7, spinSpeed + 0.03)
+            case .miss?:
+                spinSpeed = 0.2
+                stumble = 1
+                shake = max(shake, 0.25)
+            case nil:
+                break
+            }
+        }
+        spinSpeed = damp(spinSpeed, 0.3, 0.3, max(dt, 0.001))
+        let a = time * 0.09
+        followCamera(eye: rotateY(V3(0, 2.0, 5.2), a), target: V3(0, 1.35, 0), fov: 46, rate: 2, dt: max(dt, 0.016))
+    }
+
     override func updateIdle(dt: Float) {
         let a = time * 0.07
         placeCamera(eye: rotateY(V3(0, 2.1, 6.5), a), target: V3(0, 1.4, 0), fov: 48)
@@ -156,10 +200,31 @@ final class FinaleStage: Stage3D {
 
     override func beginShot(_ cue: Cue) {
         layout()
+        if cue == .promArrive {
+            // Пара входит в беседку из сада.
+            bella.place(V3(0.35, 0, 7), yaw: Float.pi)
+            edward.place(V3(-0.35, 0, 7), yaw: Float.pi)
+            bella.snap(.stand)
+            edward.snap(.stand)
+            bella.node.removeFromParentNode()
+            edward.node.removeFromParentNode()
+            scene.rootNode.addChildNode(bella.node)
+            scene.rootNode.addChildNode(edward.node)
+        }
     }
 
     override func updateShot(_ cue: Cue, progress p: Float, dt: Float) {
         switch cue {
+        case .promArrive:
+            let t = easeSoft(p)
+            let z = lerpf(7, 2.2, t)
+            bella.place(V3(0.35, 0, z), yaw: Float.pi)
+            edward.place(V3(-0.35, 0, z), yaw: Float.pi)
+            bella.target = t < 0.98 ? Pose.walk(time * 4, stride: 0.6) : .stand
+            edward.target = t < 0.98 ? Pose.walk(time * 4 + 1, stride: 0.6) : .escort
+            bella.rate = 14
+            edward.rate = 14
+            dolly(p, eye: (V3(2.5, 1.6, -1.5), V3(1.8, 1.5, -0.6)), look: (V3(0, 1.4, 6), V3(0, 1.4, 2.5)), fov: (44, 40))
         case .finaleDance:
             dolly(p, eye: (V3(-9, 2.6, 9), V3(-4, 2.0, 4.5)), look: (V3(0, 1.3, 0), V3(0, 1.45, 0)), fov: (50, 44))
         case .finaleClose:

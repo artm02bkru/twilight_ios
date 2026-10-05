@@ -4,21 +4,33 @@ import Foundation
 
 /// 3D-площадка. Каждая глава — своя площадка, плюс дорога (меню и пролог) и финал.
 enum StageID: Hashable, CaseIterable {
+    case menu
     case road
+    case classroom
     case van
+    case street
     case meadow
+    case forestRun
     case baseball
+    case chase
     case studio
     case finale
+    case wedding
 }
 
 extension Chapter {
     var stage: StageID {
         switch self {
-        case .van:      return .van
-        case .meadow:   return .meadow
-        case .baseball: return .baseball
-        case .studio:   return .studio
+        case .biology:     return .classroom
+        case .van:         return .van
+        case .portAngeles: return .street
+        case .meadow:      return .meadow
+        case .forest:      return .forestRun
+        case .baseball:    return .baseball
+        case .chase:       return .chase
+        case .studio:      return .studio
+        case .prom:        return .finale
+        case .wedding:     return .wedding
         }
     }
 }
@@ -36,7 +48,7 @@ enum CutsceneID: Equatable, CustomStringConvertible {
         case .prologue:          return .road
         case .intro(let c):      return c.stage
         case .outro(let c):      return c.stage
-        case .finale:            return .finale
+        case .finale:            return .wedding
         }
     }
 
@@ -74,8 +86,28 @@ enum Cue: Equatable {
     case studioEstablish, studioBite, studioCarlisle, studioEdward
     case studioCalm, studioEmbrace
 
-    // Финал — выпускной
-    case finaleDance, finaleClose, finaleCrane
+    // Глава 1 — кабинет биологии
+    case classEstablish, classBellaEnters, classEdwardStare, classMicroscope
+    case classBell, classEdwardSmile
+
+    // Глава 8 — Порт-Анджелес
+    case streetEstablish, streetBellaLost, streetFootsteps
+    case streetHeadlights, streetGetIn
+
+    // Глава 14 — над лесом
+    case forestOnBack, forestTreetops
+    case forestLanding, forestDizzy
+
+    // Глава 18 — погоня
+    case chaseDepart, chaseMirror
+    case chaseLost, chaseDawn
+
+    // Эпилог — выпускной
+    case promArrive, finaleDance, finaleClose, finaleCrane
+
+    // Свадьба
+    case weddingAlice, weddingGarden, weddingReady
+    case weddingAisle, weddingVows, weddingKiss, weddingCrane
 }
 
 enum ShotStyle {

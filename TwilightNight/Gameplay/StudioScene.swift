@@ -13,15 +13,17 @@ struct StudioScene {
     var extracted: Double = 0
     private var scoreStep: Double = 0
 
-    static let venomRate: Double = 0.185
+    static let venomRate: Double = 0.11
+    private var difficulty: Double = 1
 
     var thirstRate: Double {
         // Ближе к концу яда соблазн сильнее.
-        0.30 + 0.34 * (1 - venom)
+        (0.24 + 0.30 * (1 - venom)) * difficulty
     }
 
-    mutating func start() {
+    mutating func start(difficulty: CGFloat = 1) {
         self = StudioScene()
+        self.difficulty = Double(difficulty)
     }
 
     mutating func update(_ ctx: SceneContext) -> SceneOutcome {
@@ -40,7 +42,7 @@ struct StudioScene {
             scoreStep += before - venom
             if scoreStep >= 0.05 {
                 scoreStep -= 0.05
-                outcome.score = 7
+                outcome.score = 8
             }
         } else {
             thirst = max(0, thirst - 0.50 * Double(ctx.dt))

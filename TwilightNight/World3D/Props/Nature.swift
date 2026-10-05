@@ -60,15 +60,16 @@ enum Nature {
     /// Ель: ствол и ярусы поникших еловых лап. Каждая лапа — изогнутая полоса хвои,
     /// темнее у ствола и светлее на кончиках. Высота ~ height метров.
     static func addSpruce(to b: MeshBuilder, at p: V3, height: Float, rng: inout SeededRandom,
-                          needle: UIColor = UIColor(hex: 0x1C3520)) {
-        b.addCylinder(bottom: SCNVector3(p.x, p.y - 0.3, p.z), radius: height * 0.022,
-                      height: height * 0.92, sides: 6, color: UIColor(hex: 0x3A2A1E))
+                          needle: UIColor = UIColor(hex: 0x1C3520), branchStart: Float = 0.1,
+                          trunkRadius: Float? = nil) {
+        b.addCylinder(bottom: SCNVector3(p.x, p.y - 0.3, p.z), radius: trunkRadius ?? height * 0.022,
+                      height: height * 0.92, sides: trunkRadius == nil ? 6 : 12, color: UIColor(hex: 0x3A2A1E))
         let base = needle.rgba4
         let inner = base * SIMD4(0.45, 0.45, 0.45, 1)
         let tiers = 14
         for i in 0..<tiers {
             let t = Float(i) / Float(tiers)
-            let y = p.y + height * (0.1 + t * 0.82)
+            let y = p.y + height * (branchStart + t * (0.92 - branchStart))
             let length = height * 0.24 * (1 - t * 0.88) * rng.range(0.85, 1.12)
             let branches = 7 + Int(rng.unit() * 3)
             let spin = rng.range(0, 2 * Float.pi)

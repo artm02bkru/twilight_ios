@@ -98,8 +98,20 @@ struct HudView: View {
     @ViewBuilder
     private var chapterMeters: some View {
         switch engine.chapter {
-        case .van:
+        case .van, .biology, .wedding:
             EmptyView()
+
+        case .portAngeles, .forest:
+            let runner = engine.chapter == .forest ? engine.forest : engine.portAngeles
+            dotsMeter(title: engine.chapter == .forest ? "СТОЛКНОВЕНИЯ" : "ПРЕСЛЕДОВАТЕЛИ",
+                      filled: runner.hits % 3, total: 3, tint: Theme.bloodLight)
+
+        case .chase:
+            meter(title: "ДЖЕЙМС БЛИЗКО", value: engine.chase.danger, tint: Theme.bloodLight,
+                  warning: engine.chase.danger > 0.65)
+
+        case .prom:
+            dotsMeter(title: "СБИЛАСЬ С РИТМА", filled: engine.prom.misses % 5, total: 5, tint: Theme.bloodLight)
 
         case .meadow:
             meter(
@@ -162,6 +174,26 @@ struct HudView: View {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .stroke(warning ? Theme.bloodLight.opacity(0.7) : Color.white.opacity(0.12), lineWidth: 1)
         )
+    }
+
+    /// Ряд точек: сколько ошибок до потери жизни.
+    private func dotsMeter(title: String, filled: Int, total: Int, tint: Color) -> some View {
+        HStack(spacing: 8) {
+            Text(title)
+                .font(Theme.body(11, weight: .heavy))
+                .tracking(1.2)
+                .foregroundColor(filled > 0 ? tint : Theme.textDim)
+            ForEach(0..<total, id: \.self) { index in
+                Circle()
+                    .fill(index < filled ? tint : Color.white.opacity(0.18))
+                    .frame(width: 11, height: 11)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .frame(maxWidth: 330)
+        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.black.opacity(0.42)))
     }
 
     /// Гром: насколько громко сейчас, и где «зона идеального удара».
