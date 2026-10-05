@@ -92,6 +92,12 @@ final class Humanoid {
             skin.emission.contents = UIColor(red: 0.35, green: 0.08, blue: 0.05, alpha: 1)
             skin.emission.intensity = 0.04
         }
+        // Мягкий подповерхностный отсвет по краю силуэта — кожа перестаёт быть «пластиковой».
+        let rimColor = look.vampire ? "float3(0.55, 0.62, 0.75)" : "float3(0.75, 0.28, 0.18)"
+        skin.shaderModifiers = [.surface: """
+        float skinRim = 1.0 - max(dot(_surface.normal, _surface.view), 0.0);
+        _surface.emission.rgb += \(rimColor) * pow(skinRim, 3.0) * 0.12;
+        """]
         iris = Materials.pbr(look.eyes, roughness: 0.12)
         iris.clearCoat.contents = 1.0
         if look.vampire {
@@ -180,7 +186,7 @@ final class Humanoid {
         let look = self.look
         let mesh = MeshCache.mesh("body-" + meshKey) {
             CharacterSculpt.body(look) { frames[$0.rawValue] }
-                .mesh(cell: 0.0105, boneCount: frames.count, uvScale: 4)
+                .mesh(cell: 0.0082, boneCount: frames.count, uvScale: 4)
         }
         guard !mesh.isEmpty else { return }
 
@@ -191,7 +197,10 @@ final class Humanoid {
         let tie = Materials.cloth(UIColor(white: 0.03, alpha: 1), roughness: 0.35, sheen: true)
         topMaterial = top
         bottomMaterial = bottom
-        let geometry = mesh.geometry(materials: [skin, top, bottom, plaster, shirt, tie])
+        let leather = Materials.pbr(UIColor(hex: 0x2A1C14), roughness: 0.4)
+        leather.clearCoat.contents = 0.5
+        let metal = Materials.pbr(UIColor(white: 0.75, alpha: 1), roughness: 0.25, metalness: 1)
+        let geometry = mesh.geometry(materials: [skin, top, bottom, plaster, shirt, tie, leather, metal])
 
         let skinned = SCNNode(geometry: geometry)
         skinned.name = "skin"
@@ -219,7 +228,7 @@ final class Humanoid {
         let brow = Materials.pbr(look.hairColor.darkened(0.05), roughness: 0.8)
 
         let faceMesh = MeshCache.mesh("head-\(look.name)-\(look.female)") {
-            CharacterSculpt.head(look).mesh(cell: 0.0036, uvScale: 30)
+            CharacterSculpt.head(look).mesh(cell: 0.003, uvScale: 30)
         }
         head.addChildNode(SCNNode(geometry: faceMesh.geometry(materials: [skin, lip, brow])))
 
@@ -241,6 +250,13 @@ final class Humanoid {
             pupilNode.simdPosition = V3(x, 0.119, 0.0955)
             head.add(pupilNode)
 
+            // Ресницы по краю верхнего века.
+            let lashes = SCNNode(SCNBox(width: 0.029, height: 0.0022, length: 0.009, chamferRadius: 0.001),
+                                 Materials.pbr(look.hairColor.darkened(0.2), roughness: 0.6))
+            lashes.simdPosition = V3(x, 0.1262, 0.0945)
+            lashes.eulerAngles = SCNVector3(-0.5, 0, side * -0.08)
+            head.add(lashes)
+
             // Веко: в открытом глазу почти целиком спрятано под надбровьем.
             let lidPivot = SCNNode()
             lidPivot.simdPosition = V3(x, 0.1255, 0.0815)
@@ -254,7 +270,7 @@ final class Humanoid {
         }
 
         let hairMesh = MeshCache.mesh("hair-\(look.name)-\(look.hair)") {
-            CharacterSculpt.hair(look).mesh(cell: 0.0045, uvScale: 1)
+            CharacterSculpt.hair(look).mesh(cell: 0.0038, uvScale: 1)
         }
         let hair = Materials.pbr(look.hairColor, roughness: 0.45, normal: Textures.hairStrands,
                                  normalIntensity: 0.6)
@@ -271,13 +287,15 @@ final class Humanoid {
     private func buildExtremities() {
         let female = look.female
         let left = MeshCache.mesh("hand-L-\(female)") {
-            CharacterSculpt.hand(side: 1, female: female).mesh(cell: 0.0032, uvScale: 30)
+            CharacterSculpt.hand(side: 1, female: female).mesh(cell: 0.0027, uvScale: 30)
         }
         let right = MeshCache.mesh("hand-R-\(female)") {
-            CharacterSculpt.hand(side: -1, female: female).mesh(cell: 0.0032, uvScale: 30)
+            CharacterSculpt.hand(side: -1, female: female).mesh(cell: 0.0027, uvScale: 30)
         }
-        handL.addChildNode(SCNNode(geometry: left.geometry(materials: [skin])))
-        handR.addChildNode(SCNNode(geometry: right.geometry(materials: [skin])))
+        let nail = Materials.pbr(look.skin.lightened(0.06), roughness: 0.15)
+        nail.clearCoat.contents = 1
+        handL.addChildNode(SCNNode(geometry: left.geometry(materials: [skin, nail])))
+        handR.addChildNode(SCNNode(geometry: right.geometry(materials: [skin, nail])))
 
         let boot = look.skirt && !look.longSkirt
         let shoeMesh = MeshCache.mesh("shoe-\(boot)") {

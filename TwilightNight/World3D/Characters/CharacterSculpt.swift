@@ -5,7 +5,7 @@ import simd
 enum CharacterSculpt {
 
     // Слоты материалов тела.
-    enum BodySlot: Int { case skin = 0, top, bottom, plaster, shirt, tie }
+    enum BodySlot: Int { case skin = 0, top, bottom, plaster, shirt, tie, leather, metal }
     // Слоты лица.
     enum HeadSlot: Int { case skin = 0, lips, brow }
 
@@ -77,6 +77,27 @@ enum CharacterSculpt {
         if look.bowTie {
             ell(.chest, V3(0, 0.15, 0.104), V3(0.05, 0.1, 0.018), BodySlot.shirt.rawValue, blend: 0.006)
             box(.chest, V3(0, 0.232, 0.092), V3(0.036, 0.014, 0.01), round: 0.006, BodySlot.tie.rawValue, blend: 0.003)
+        }
+
+        // Детали одежды.
+        let leather = BodySlot.leather.rawValue
+        let metal = BodySlot.metal.rawValue
+        if !look.skirt {
+            // Ремень с пряжкой.
+            ell(.hips, V3(0, 0.058, 0.0), V3((f ? 0.15 : 0.155) * w, 0.022, 0.108), leather, blend: 0.004)
+            box(.hips, V3(0, 0.058, 0.108), V3(0.022, 0.016, 0.005), round: 0.003, metal, blend: 0.002)
+            // Задние карманы джинсов.
+            box(.hips, V3(0.066, -0.06, -0.112), V3(0.04, 0.045, 0.006), round: 0.005, bottom, blend: 0.004)
+            box(.hips, V3(-0.066, -0.06, -0.112), V3(0.04, 0.045, 0.006), round: 0.005, bottom, blend: 0.004)
+        }
+        if look.coat || look.bowTie {
+            // Лацканы пиджака или пальто.
+            box(.chest, V3(0.05, 0.16, 0.112), V3(0.034, 0.075, 0.008), round: 0.006, top, blend: 0.006)
+            box(.chest, V3(-0.05, 0.16, 0.112), V3(0.034, 0.075, 0.008), round: 0.006, top, blend: 0.006)
+        } else if !look.skirt {
+            // Молния куртки по центру.
+            box(.chest, V3(0, 0.08, 0.117), V3(0.005, 0.15, 0.006), round: 0.002, metal, blend: 0.002)
+            box(.spine, V3(0, 0.06, 0.104), V3(0.005, 0.1, 0.006), round: 0.002, metal, blend: 0.002)
         }
 
         // Шея (верх уходит внутрь головы).
@@ -196,6 +217,14 @@ enum CharacterSculpt {
             }
             m.ellipsoid(V3(0.025, 0.198, 0.072), V3(0.05, 0.022, 0.035), rotation: V3(-0.4, 0, -0.3),
                         slot: 0, blend: 0.012)
+            // Тонкие пряди, зачёсанные назад и вверх.
+            for i in 0..<18 {
+                let x = rng.range(-0.08, 0.08)
+                let start = V3(x, 0.19, 0.06)
+                let end = V3(x * 1.1 + rng.range(-0.02, 0.02), 0.235 + rng.range(-0.01, 0.015), -0.04 + rng.range(-0.03, 0.02))
+                m.capsule(start, end, 0.009, 0.005, slot: 0, blend: 0.007)
+                _ = i
+            }
 
         case .long, .wavy:
             let len: Float = look.hair == .long ? 0.36 : 0.2
@@ -204,7 +233,16 @@ enum CharacterSculpt {
                 m.box(V3(side * 0.088, 0.11 - len * 0.42, -0.02), V3(0.022, len * 0.42, 0.03), round: 0.016,
                       rotation: V3(0, 0, side * 0.06), slot: 0, blend: 0.025)
             }
-            // Пряди — волны по поверхности.
+            // Пряди-локоны от макушки вниз: рельеф прядей поверх основы.
+            for i in 0..<26 {
+                let a = Float(i) / 26 * Float.pi * 1.3 - Float.pi * 0.15
+                let top = V3(cos(a) * 0.095, 0.17, -0.03 - sin(a) * 0.08)
+                let mid = V3(cos(a) * 0.105, 0.04, -0.06 - sin(a) * 0.04) + V3(rng.range(-0.01, 0.01), 0, 0)
+                let end = V3(cos(a) * 0.09 + rng.range(-0.015, 0.015), 0.12 - len, -0.08 - sin(a) * 0.01)
+                guard cos(a) > -0.2 || sin(a) > 0.3 else { continue }
+                m.capsule(top, mid, 0.013, 0.012, slot: 0, blend: 0.008)
+                m.capsule(mid, end, 0.012, 0.007, slot: 0, blend: 0.008)
+            }
             for i in 0..<14 {
                 let x = rng.range(-0.1, 0.1)
                 let y = rng.range(0.12 - len, 0.1)
@@ -285,6 +323,9 @@ enum CharacterSculpt {
             m.capsule(knuckle * s, a * s, 0.0092 * s, 0.0085 * s, slot: 0, blend: 0.008)
             m.capsule(a * s, b * s, 0.0085 * s, 0.0078 * s, slot: 0, blend: 0.004)
             m.capsule(b * s, c * s, 0.0078 * s, 0.0068 * s, slot: 0, blend: 0.003)
+            // Ноготь на тыльной стороне кончика пальца.
+            let nail = c + V3(side * 0.0045, len * 0.06, 0)
+            m.ellipsoid(nail * s, V3(0.0035, 0.008, 0.0062) * s, slot: 1, blend: 0.001, claim: 0.0012)
         }
         // Большой палец.
         let t0 = V3(-side * 0.006, -0.025, 0.026)

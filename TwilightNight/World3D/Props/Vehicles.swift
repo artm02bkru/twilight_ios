@@ -43,7 +43,13 @@ final class Vehicle {
             let tire = SCNTorus(ringRadius: CGFloat(wheelRadius * 0.68), pipeRadius: CGFloat(wheelRadius * 0.32))
             tire.ringSegmentCount = 36
             tire.pipeSegmentCount = 16
-            let tireNode = SCNNode(tire, Materials.rubber())
+            let rubber = Materials.rubber()
+            rubber.normal.contents = Textures.tireTread
+            rubber.normal.intensity = 0.9
+            rubber.normal.contentsTransform = SCNMatrix4MakeScale(1, 6, 1)
+            rubber.normal.wrapS = .repeat
+            rubber.normal.wrapT = .repeat
+            let tireNode = SCNNode(tire, rubber)
             tireNode.eulerAngles.z = Float.pi / 2
             wheel.addChildNode(tireNode)
             let rim = SCNCylinder(radius: CGFloat(wheelRadius * 0.55), height: CGFloat(wheelRadius * 0.5))
@@ -51,6 +57,21 @@ final class Vehicle {
             let rimNode = SCNNode(rim, Materials.pbr(UIColor(white: 0.55, alpha: 1), roughness: 0.3, metalness: 0.9))
             rimNode.eulerAngles.z = Float.pi / 2
             wheel.addChildNode(rimNode)
+            // Спицы диска и болты.
+            let outward: Float = spot.x > 0 ? 1 : -1
+            let spokeMat = Materials.pbr(UIColor(white: 0.7, alpha: 1), roughness: 0.25, metalness: 0.95)
+            for k in 0..<6 {
+                let a = Float(k) / 6 * 2 * Float.pi
+                let spoke = SCNNode(SCNBox(width: 0.02, height: CGFloat(wheelRadius * 0.95), length: 0.05, chamferRadius: 0.008),
+                                    spokeMat)
+                spoke.simdPosition = V3(outward * wheelRadius * 0.26, 0, 0)
+                spoke.simdEulerAngles = V3(a, 0, 0)
+                wheel.addChildNode(spoke)
+                let nut = SCNNode(SCNCylinder(radius: 0.011, height: 0.02), Materials.chrome())
+                nut.simdPosition = V3(outward * wheelRadius * 0.28, sin(a) * wheelRadius * 0.12, cos(a) * wheelRadius * 0.12)
+                nut.eulerAngles.z = Float.pi / 2
+                wheel.addChildNode(nut)
+            }
             let cap = SCNSphere(radius: CGFloat(wheelRadius * 0.22))
             let capNode = SCNNode(cap, Materials.chrome())
             capNode.simdScale = V3(0.5, 1, 1)
@@ -60,6 +81,8 @@ final class Vehicle {
             wheels.append(wheel)
         }
 
+        addDetails(length: wheelSpots.map { abs($0.z) }.max() ?? 1.5)
+
         for spot in headlightSpots {
             let lamp = Stage3D.spotLight(color: UIColor(red: 1, green: 0.92, blue: 0.78, alpha: 1),
                                          intensity: 0, angle: 55, range: 45)
@@ -68,6 +91,60 @@ final class Vehicle {
             node.addChildNode(lamp)
             headlights.append(lamp)
         }
+    }
+
+    /// Мелочи, без которых машина выглядит игрушкой: ручки, зеркала, номера, дворники, антенна, выхлоп.
+    private func addDetails(length: Float) {
+        let chrome = Materials.chrome()
+        let black = Materials.pbr(UIColor(white: 0.04, alpha: 1), roughness: 0.4)
+        let (bmin, bmax) = bodyNode.boundingBox
+        let halfW = max(abs(bmin.x), abs(bmax.x))
+        let front = bmax.z, back = bmin.z, roof = bmax.y
+
+        // Дверные ручки.
+        for side: Float in [-1, 1] {
+            for z: Float in [0.25, -0.75] where z < front - 0.8 {
+                let handle = SCNNode(SCNBox(width: 0.03, height: 0.03, length: 0.16, chamferRadius: 0.012), chrome)
+                handle.simdPosition = V3(side * (halfW - 0.005), roof * 0.66, z)
+                bodyNode.addChildNode(handle)
+            }
+            // Зеркало заднего вида.
+            let arm = SCNNode(SCNBox(width: 0.12, height: 0.03, length: 0.04, chamferRadius: 0.01), black)
+            arm.simdPosition = V3(side * (halfW + 0.04), roof * 0.78, front * 0.38)
+            bodyNode.addChildNode(arm)
+            let mirror = SCNNode(SCNBox(width: 0.06, height: 0.12, length: 0.18, chamferRadius: 0.025), paint)
+            mirror.simdPosition = V3(side * (halfW + 0.11), roof * 0.79, front * 0.38)
+            bodyNode.addChildNode(mirror)
+            let glass = SCNNode(SCNPlane(width: 0.14, height: 0.09), Materials.mirror())
+            glass.simdPosition = V3(side * (halfW + 0.11), roof * 0.79, front * 0.38 - 0.092)
+            glass.eulerAngles.y = Float.pi
+            bodyNode.addChildNode(glass)
+        }
+        // Номера спереди и сзади.
+        let plateMat = Materials.pbr(Textures.plate(["FRK 053", "TYL 921", "CLN 001", "WA 4417"].randomElement() ?? "FRK 053"),
+                                     roughness: 0.35, metalness: 0.3)
+        for (z, yaw) in [(front + 0.012, Float(0)), (back - 0.012, Float.pi)] {
+            let plate = SCNNode(SCNPlane(width: 0.32, height: 0.16), plateMat)
+            plate.simdPosition = V3(0, 0.45, z)
+            plate.eulerAngles.y = yaw
+            bodyNode.addChildNode(plate)
+        }
+        // Дворники на лобовом стекле.
+        for x: Float in [-0.25, 0.3] {
+            let wiper = SCNNode(SCNBox(width: 0.55, height: 0.012, length: 0.02, chamferRadius: 0.004), black)
+            wiper.simdPosition = V3(x, roof * 0.7, front * 0.42)
+            wiper.eulerAngles = SCNVector3(-0.5, 0, 0.25)
+            bodyNode.addChildNode(wiper)
+        }
+        // Антенна и выхлопная труба.
+        let antenna = SCNNode(SCNCylinder(radius: 0.004, height: 0.55), black)
+        antenna.simdPosition = V3(halfW * 0.6, roof + 0.2, back * 0.6)
+        bodyNode.addChildNode(antenna)
+        let exhaust = SCNNode(SCNCylinder(radius: 0.035, height: 0.25), chrome)
+        exhaust.simdPosition = V3(-halfW * 0.55, 0.28, back - 0.02)
+        exhaust.eulerAngles.x = Float.pi / 2
+        bodyNode.addChildNode(exhaust)
+        _ = length
     }
 
     /// Включить фары (0...1).
@@ -131,7 +208,7 @@ final class Vehicle {
             }
             // Тёмный салон за стёклами.
             m.box(V3(0, 1.35, 0.3), V3(0.66, 0.25, 0.48), round: 0.05, slot: Slot.interior.rawValue, blend: 0.0)
-            return m.mesh(cell: 0.024, uvScale: 1)
+            return m.mesh(cell: 0.017, uvScale: 1)
         }
         let v = Vehicle(mesh: mesh, paintColor: UIColor(hex: 0x7A1E16),
                         wheelSpots: [V3(0.8, 0.4, 1.5), V3(-0.8, 0.4, 1.5), V3(0.84, 0.4, -1.5), V3(-0.84, 0.4, -1.5)],
@@ -175,7 +252,7 @@ final class Vehicle {
             m.box(V3(0, 0.55, -2.42), V3(0.95, 0.1, 0.07), round: 0.05, slot: trim, blend: 0.02)
             m.box(V3(0, 0.82, 2.46), V3(0.5, 0.1, 0.03), round: 0.02, slot: trim, blend: 0.006)
             m.box(V3(0, 1.4, 0.1), V3(0.84, 0.3, 2.0), round: 0.05, slot: Slot.interior.rawValue, blend: 0)
-            return m.mesh(cell: 0.025, uvScale: 1)
+            return m.mesh(cell: 0.017, uvScale: 1)
         }
         let v = Vehicle(mesh: mesh, paintColor: UIColor(hex: 0x2C4A5E),
                         wheelSpots: [V3(0.88, 0.4, 1.6), V3(-0.88, 0.4, 1.6), V3(0.88, 0.4, -1.55), V3(-0.88, 0.4, -1.55)],
@@ -226,7 +303,7 @@ final class Vehicle {
             m.box(V3(0, 0.5, 2.3), V3(0.85, 0.08, 0.06), round: 0.04, slot: trim, blend: 0.02)
             m.box(V3(0, 0.5, -2.3), V3(0.85, 0.08, 0.06), round: 0.04, slot: trim, blend: 0.02)
             m.box(V3(0, 1.05, -0.15), V3(0.72, 0.2, 0.95), round: 0.05, slot: Slot.interior.rawValue, blend: 0)
-            return m.mesh(cell: 0.024, uvScale: 1)
+            return m.mesh(cell: 0.017, uvScale: 1)
         }
         return Vehicle(mesh: mesh, paintColor: color,
                        wheelSpots: [V3(0.82, 0.36, 1.42), V3(-0.82, 0.36, 1.42), V3(0.82, 0.36, -1.42), V3(-0.82, 0.36, -1.42)],

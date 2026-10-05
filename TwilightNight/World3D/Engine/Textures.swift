@@ -379,6 +379,45 @@ enum Textures {
         }
     }()
 
+    // MARK: Шины и номера
+
+    /// Протектор шины: поперечные канавки и продольные рёбра.
+    static let tireTread: UIImage = {
+        let size = 128
+        return normalMap(size: size, strength: 2.5) { (x: Int, y: Int) -> Float in
+            let fx: Float = Float(x) / Float(size)
+            let fy: Float = Float(y) / Float(size)
+            let block: Float = sin(fx * Float.pi * 2 * 12) > 0.2 ? 1 : 0
+            let rib: Float = abs(fy - 0.5) < 0.04 ? 0 : 1
+            return block * rib
+        }
+    }()
+
+    /// Номерной знак с надписью.
+    static func plate(_ text: String) -> UIImage {
+        let size = CGSize(width: 256, height: 128)
+        let renderer = UIGraphicsImageRenderer(size: size)
+        return renderer.image { ctx in
+            UIColor(white: 0.93, alpha: 1).setFill()
+            ctx.fill(CGRect(origin: .zero, size: size))
+            UIColor(red: 0.1, green: 0.2, blue: 0.5, alpha: 1).setStroke()
+            let border = UIBezierPath(roundedRect: CGRect(x: 6, y: 6, width: size.width - 12, height: size.height - 12),
+                                      cornerRadius: 10)
+            border.lineWidth = 6
+            border.stroke()
+            let header = NSAttributedString(string: "WASHINGTON", attributes: [
+                .font: UIFont.systemFont(ofSize: 18, weight: .bold),
+                .foregroundColor: UIColor(red: 0.1, green: 0.2, blue: 0.5, alpha: 1)
+            ])
+            header.draw(at: CGPoint(x: (size.width - header.size().width) / 2, y: 12))
+            let main = NSAttributedString(string: text, attributes: [
+                .font: UIFont.monospacedSystemFont(ofSize: 52, weight: .heavy),
+                .foregroundColor: UIColor(white: 0.08, alpha: 1)
+            ])
+            main.draw(at: CGPoint(x: (size.width - main.size().width) / 2, y: 40))
+        }
+    }
+
     // MARK: Окна
 
     /// Сетка окон: часть горит тёплым светом. Для эмиссии фасадов.
