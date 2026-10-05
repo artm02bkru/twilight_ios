@@ -186,6 +186,19 @@ final class StudioStage: Stage3D {
         venomLight.simdPosition = wrist + V3(0, 0.15, 0)
     }
 
+    override var ambience: [SoundFX.Ambience: Float] { [.hum: 0.22] }
+
+    private var lastBeat: Float = 0
+
+    /// Удар сердца Беллы в такт пульсу; тише, когда яда меньше.
+    private func heartbeat(_ pulse: Float, strength: Float) {
+        let phase = sin(pulse)
+        if phase > 0.95 && lastBeat <= 0.95 {
+            SoundFX.shared.play(.heartbeat, volume: 0.35 + strength * 0.5)
+        }
+        lastBeat = phase
+    }
+
     private func setVenom(_ v: Float, pulse: Float) {
         let beat = 0.75 + 0.25 * sin(pulse)
         venomLight.light?.intensity = CGFloat(v * 260 * beat)
@@ -232,6 +245,7 @@ final class StudioStage: Stage3D {
         edward.setEyes(eye, glow: CGFloat(0.3 + thirst * 2.5))
         if s.lostControl > 0.8 { shake = max(shake, 0.9) }
         setVenom(Float(s.venom), pulse: Float(s.pulse))
+        heartbeat(Float(s.pulse) * 2.0, strength: Float(s.thirst))
 
         // Камера наезжает, когда жажда растёт.
         let wrist = bella.handR.simdWorldPosition

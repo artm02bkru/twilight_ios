@@ -6,14 +6,21 @@ import simd
 
 extension MeshBuilder {
 
-    /// Треугольник с разными цветами вершин и общей нормалью (трава, лепестки).
+    /// Треугольник с разными цветами вершин и общей нормалью (трава, лепестки, хвоя).
     func addTriangle(_ a: V3, _ ca: UIColor, _ b: V3, _ cb: UIColor, _ c: V3, _ cc: UIColor, normal: V3) {
-        let n = SCNVector3(normal.x, normal.y, normal.z)
-        addSmoothTriangle(SCNVector3(a.x, a.y, a.z), n, SCNVector3(b.x, b.y, b.z), n,
-                          SCNVector3(c.x, c.y, c.z), n, ca)
-        // addSmoothTriangle красит все три вершины одним цветом —
-        // для травы этого достаточно: градиент даёт освещение и туман.
-        _ = (cb, cc)
+        addColoredTriangle(SCNVector3(a.x, a.y, a.z), ca.rgba4,
+                           SCNVector3(b.x, b.y, b.z), cb.rgba4,
+                           SCNVector3(c.x, c.y, c.z), cc.rgba4,
+                           normal: SCNVector3(normal.x, normal.y, normal.z))
+    }
+
+    /// То же с готовыми цветами SIMD — без конвертаций UIColor в горячих циклах.
+    func addTriangle(_ a: V3, _ ca: SIMD4<Float>, _ b: V3, _ cb: SIMD4<Float>, _ c: V3, _ cc: SIMD4<Float>,
+                     normal: V3) {
+        addColoredTriangle(SCNVector3(a.x, a.y, a.z), ca,
+                           SCNVector3(b.x, b.y, b.z), cb,
+                           SCNVector3(c.x, c.y, c.z), cc,
+                           normal: SCNVector3(normal.x, normal.y, normal.z))
     }
 
     /// Низкополигональный шар (крона, куст, камень). squash — сплющить по вертикали.
@@ -50,24 +57,46 @@ enum Nature {
 
     // MARK: Ели
 
-    /// Ель: ствол и ярусы хвои с лёгким разбросом. Высота ~ height метров.
+    /// Ель: ствол и ярусы поникших еловых лап. Каждая лапа — изогнутая полоса хвои,
+    /// темнее у ствола и светлее на кончиках. Высота ~ height метров.
     static func addSpruce(to b: MeshBuilder, at p: V3, height: Float, rng: inout SeededRandom,
                           needle: UIColor = UIColor(hex: 0x1C3520)) {
-        let trunk = UIColor(hex: 0x3A2A1E)
-        b.addCylinder(bottom: SCNVector3(p.x, p.y - 0.3, p.z), radius: height * 0.03,
-                      height: height * 0.35, sides: 6, color: trunk)
-        let tiers = 6
-        let base = height * 0.36
+        b.addCylinder(bottom: SCNVector3(p.x, p.y - 0.3, p.z), radius: height * 0.022,
+                      height: height * 0.92, sides: 6, color: UIColor(hex: 0x3A2A1E))
+        let base = needle.rgba4
+        let inner = base * SIMD4(0.45, 0.45, 0.45, 1)
+        let tiers = 14
         for i in 0..<tiers {
             let t = Float(i) / Float(tiers)
-            let r = height * 0.24 * (1 - t * 0.78) * rng.range(0.9, 1.1)
-            let y = p.y + height * 0.14 + t * height * 0.7
-            let shade = needle.lightened(t * 0.06).darkened(rng.range(0, 0.06))
-            let ox = rng.range(-0.08, 0.08) * height * 0.05
-            let oz = rng.range(-0.08, 0.08) * height * 0.05
-            b.addCone(base: SCNVector3(p.x + ox, y, p.z + oz), radius: r,
-                      height: base * (1 - t * 0.3), sides: 9, color: shade)
+            let y = p.y + height * (0.1 + t * 0.82)
+            let length = height * 0.24 * (1 - t * 0.88) * rng.range(0.85, 1.12)
+            let branches = 7 + Int(rng.unit() * 3)
+            let spin = rng.range(0, 2 * Float.pi)
+            let tipShade = 1.0 + rng.range(0.05, 0.25) + t * 0.15
+            let tip = base * SIMD4(tipShade, tipShade * 1.05, tipShade, 1)
+            for k in 0..<branches {
+                let a = spin + Float(k) / Float(branches) * 2 * Float.pi + rng.range(-0.2, 0.2)
+                let dir = V3(cos(a), 0, sin(a))
+                let side = V3(-sin(a), 0, cos(a))
+                let droop = length * rng.range(0.4, 0.65)
+                let root = V3(p.x, y, p.z) + V3(0, length * 0.05, 0)
+                let mid = root + dir * (length * 0.55) + V3(0, -droop * 0.25, 0)
+                let end = root + dir * length + V3(0, -droop, 0)
+                let w = length * 0.42
+                let up = simd_normalize(dir * 0.35 + V3(0, 1, 0))
+                // Две секции лапы: от ствола до середины и до кончика.
+                b.addTriangle(root - side * (w * 0.25), inner, mid - side * w, base, mid + side * w, base, normal: up)
+                b.addTriangle(root - side * (w * 0.25), inner, mid + side * w, base, root + side * (w * 0.25), inner, normal: up)
+                b.addTriangle(mid - side * w, base, end, tip, mid + side * w, base, normal: up)
+                // Нижний слой — объём лапы снизу, чуть темнее.
+                let under = mid + V3(0, -length * 0.08, 0)
+                b.addTriangle(root, inner, under - side * (w * 0.7), inner, end, base, normal: up)
+                b.addTriangle(root, inner, end, base, under + side * (w * 0.7), inner, normal: up)
+            }
         }
+        // Верхушка.
+        b.addCone(base: SCNVector3(p.x, p.y + height * 0.9, p.z), radius: height * 0.03,
+                  height: height * 0.12, sides: 6, color: needle.lightened(0.04))
     }
 
     /// Лиственное дерево: ствол и несколько крон-шаров.
@@ -117,6 +146,7 @@ enum Nature {
         }
         let node = SCNNode(geometry: b.geometry(name: "forest"))
         let m = Materials.matte(roughness: 0.9)
+        m.isDoubleSided = true
         m.shaderModifiers = [.geometry: Materials.windModifier(strength: 0.006)]
         node.geometry?.materials = [m]
         node.castsShadow = true
@@ -149,9 +179,12 @@ enum Nature {
             let side = V3(cos(dir), 0, sin(dir)) * w
             let lean = V3(sin(dir + 1.3), 0, cos(dir + 1.3)) * h * rng.range(0.1, 0.35)
             let color = colors[Int(rng.unit() * Float(colors.count)) % colors.count]
-                .darkened(rng.range(0, 0.08))
+                .darkened(rng.range(0, 0.08)).rgba4
+            // У корня травинка в тени соседей, кончик выгорел на свету.
+            let root = color * SIMD4(0.4, 0.42, 0.4, 1)
+            let tipColor = color * SIMD4(1.25, 1.22, 1.05, 1)
             let tip = p + V3(0, h, 0) + lean
-            b.addTriangle(p - side, color, p + side, color, tip, color, normal: V3(0, 1, 0))
+            b.addTriangle(p - side, root, p + side, root, tip, tipColor, normal: V3(0, 1, 0))
         }
         let node = SCNNode(geometry: b.geometry(name: "grass"))
         let m = Materials.matte(roughness: 0.85)

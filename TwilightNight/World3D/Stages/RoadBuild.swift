@@ -274,7 +274,6 @@ enum RoadBuild {
         let terrainNoise = ValueNoise(seed: seed)
         let builder = MeshBuilder()
 
-        let trunkColor = UIColor(hex: 0x3A2C22)
         let needleBase = UIColor(hex: 0x1E3A22)
 
         var placed = 0
@@ -291,25 +290,17 @@ enum RoadBuild {
             let y = groundHeight(x, z, path: path, noise: terrainNoise)
             let scale = 0.7 + noise.value(Float(attempt) * 0.53, 8.8) * 0.9
             let height = 13 * scale
-            let radius = 3.3 * scale
 
-            builder.addCylinder(bottom: SCNVector3(x, y - 0.4, z), radius: 0.55 * scale,
-                                height: height * 0.34, sides: 6, color: trunkColor)
-            let shade = needleBase.darkened(Float(noise.value(Float(attempt) * 0.7, 2.2)) * 0.10)
-            for level in 0..<3 {
-                let t = Float(level) / 3
-                builder.addCone(
-                    base: SCNVector3(x, y + height * (0.18 + t * 0.27), z),
-                    radius: radius * (1 - t * 0.34),
-                    height: height * 0.52,
-                    sides: 7,
-                    color: shade.lightened(t * 0.05))
-            }
+            var treeRng = SeededRandom(seed: UInt64(attempt) &* 2654435761)
+            Nature.addSpruce(to: builder, at: V3(x, y, z), height: height * 1.5, rng: &treeRng,
+                             needle: needleBase.darkened(Float(noise.value(Float(attempt) * 0.7, 2.2)) * 0.10))
             placed += 1
         }
 
         let geometry = builder.geometry(name: "forest")
-        geometry.materials = [Materials.matte(roughness: 0.88)]
+        let material = Materials.matte(roughness: 0.88)
+        material.isDoubleSided = true
+        geometry.materials = [material]
         return geometry
     }
 

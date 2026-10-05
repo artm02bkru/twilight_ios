@@ -207,6 +207,9 @@ class Stage3D {
 
     // MARK: - Переопределяется площадками
 
+    /// Фоновые звуки площадки и их громкость.
+    var ambience: [SoundFX.Ambience: Float] { [:] }
+
     func beginShot(_ cue: Cue) {}
     func updateShot(_ cue: Cue, progress: Float, dt: Float) {}
 

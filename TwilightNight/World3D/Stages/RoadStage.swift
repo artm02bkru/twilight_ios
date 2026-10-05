@@ -28,7 +28,7 @@ final class RoadStage: Stage3D {
         root.addChildNode(SCNNode(geometry: RoadBuild.road(path: path)))
         root.addChildNode(SCNNode(geometry: RoadBuild.roadMarkings(path: path)))
         root.addChildNode(SCNNode(geometry: RoadBuild.roadsidePosts(path: path)))
-        let forest = SCNNode(geometry: RoadBuild.forest(path: path, seed: 7, count: 1300, area: 200))
+        let forest = SCNNode(geometry: RoadBuild.forest(path: path, seed: 7, count: 1000, area: 200))
         forest.geometry?.firstMaterial?.shaderModifiers = [.geometry: Materials.windModifier(strength: 0.005)]
         root.addChildNode(forest)
         root.addChildNode(SCNNode(geometry: RoadBuild.roadsideDetails(path: path, seed: 7, count: 420)))
@@ -61,6 +61,8 @@ final class RoadStage: Stage3D {
         cameraSettings.exposureOffset = 0.6
         placeCamera(eye: V3(10, 30, -20), target: V3(0, 0, 60), fov: 60)
     }
+
+    override var ambience: [SoundFX.Ambience: Float] { [.heavyRain: 0.7, .engine: 0.3, .wind: 0.2] }
 
     // MARK: - Пикап едет сам по себе в любом режиме
 

@@ -122,6 +122,8 @@ final class FinaleStage: Stage3D {
         }
     }
 
+    override var ambience: [SoundFX.Ambience: Float] { [.crickets: 0.45, .wind: 0.08] }
+
     override func updateAmbient(dt: Float) {
         for h in [bella, edward] { h.update(dt: dt, time: time) }
         for (i, b) in bulbs.enumerated() {

@@ -132,6 +132,18 @@ final class MeshBuilder {
         addTriangle(a, c, d, color)
     }
 
+    /// Треугольник с разными цветами вершин (градиент травинки от корня к кончику).
+    func addColoredTriangle(_ a: SCNVector3, _ ca: SIMD4<Float>,
+                            _ b: SCNVector3, _ cb: SIMD4<Float>,
+                            _ c: SCNVector3, _ cc: SIMD4<Float>,
+                            normal n: SCNVector3) {
+        let base = Int32(positions.count)
+        positions.append(contentsOf: [a, b, c])
+        normals.append(contentsOf: [n, n, n])
+        colors.append(contentsOf: [ca, cb, cc])
+        indices.append(contentsOf: [base, base + 1, base + 2])
+    }
+
     /// Треугольник с собственными нормалями — для рельефа, где нужна гладкость.
     func addSmoothTriangle(_ a: SCNVector3, _ na: SCNVector3,
                            _ b: SCNVector3, _ nb: SCNVector3,

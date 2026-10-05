@@ -72,6 +72,7 @@ final class WorldDirector: ObservableObject {
         if current != id {
             current = id
             modeKey = ""
+            SoundFX.shared.ambience(stage.ambience)
             if view.scene == nil {
                 view.scene = stage.scene
                 view.pointOfView = stage.camera

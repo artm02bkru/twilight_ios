@@ -228,6 +228,10 @@ final class VanStage: Stage3D {
         root.addChildNode(pole)
     }
 
+    override var ambience: [SoundFX.Ambience: Float] { [.wind: 0.45] }
+
+    private var lastStage: VanScene.Stage = .waiting
+
     // MARK: - Общее
 
     private func setVan(_ p: V3, yaw: Float, sliding: Bool) {
@@ -273,6 +277,14 @@ final class VanStage: Stage3D {
 
     override func updateGameplay(_ engine: GameEngine, dt: Float) {
         let s = engine.van
+        if s.stage != lastStage {
+            if s.stage == .sliding { SoundFX.shared.play(.skid, volume: 0.7) }
+            if s.stage == .resolving {
+                SoundFX.shared.play(.impact, volume: s.quality == .missed ? 1 : 0.85)
+                if s.quality != .missed { SoundFX.shared.play(.whoosh, volume: 0.8) }
+            }
+            lastStage = s.stage
+        }
         var x = worldX(s.vanX)
         // При промахе фургон упирается в пикап и Беллу.
         x = max(x, -5.0)
@@ -369,6 +381,7 @@ final class VanStage: Stage3D {
         case .lotVanSkid:
             setVan(V3(30, 0, 6), yaw: -Float.pi / 2, sliding: true)
             shotStart = vanPos
+            SoundFX.shared.play(.skid, volume: 0.9, delay: 0.8)
         case .lotVanClose:
             bella.place(bellaSpot, yaw: Float.pi / 2)
             bella.snap(.stand)
@@ -376,6 +389,7 @@ final class VanStage: Stage3D {
             bella.rate = 3
             setVan(V3(13, 0, 0.5), yaw: 0.4, sliding: true)
         case .lotDent:
+            SoundFX.shared.play(.impact)
             setVan(V3(-2.4, 0, 0), yaw: 0.06, sliding: false)
             van.setDent(1)
             edward.place(V3(-3.85, 0, 0.1), yaw: Float.pi / 2)

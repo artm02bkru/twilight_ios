@@ -191,7 +191,11 @@ final class BaseballStage: Stage3D {
 
     // MARK: - Погода
 
+    override var ambience: [SoundFX.Ambience: Float] { [.heavyRain: 0.8, .wind: 0.4] }
+
     private func strike() {
+        // Гром догоняет вспышку с задержкой — молния далеко.
+        SoundFX.shared.play(.thunder, volume: 0.9, delay: Double.random(in: 0.3...1.4))
         strikeSeed &+= 1
         var rng = SeededRandom(seed: strikeSeed)
         let base = V3(rng.range(-120, 120), 0, rng.range(-200, -110))
@@ -274,7 +278,10 @@ final class BaseballStage: Stage3D {
 
         // Бэттер.
         let swinging = s.impact > 0.25 || (s.stage == .resolving && s.quality == .missed && s.ballT < BaseballScene.strikeHigh)
-        if swinging && !swingLatch { shake = max(shake, 0.35) }
+        if swinging && !swingLatch {
+            shake = max(shake, 0.35)
+            SoundFX.shared.play(s.quality == .missed ? .whiff : .batCrack, volume: s.quality == .noisy ? 1 : 0.6)
+        }
         swingLatch = swinging
         edward.target = swinging ? .batFollow : .batReady
         edward.rate = swinging ? 24 : 5

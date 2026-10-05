@@ -56,6 +56,10 @@ final class Humanoid {
     private let skin: SCNMaterial
     private let iris: SCNMaterial
     private var sparkleSystems: [SCNParticleSystem] = []
+    /// Веки для моргания.
+    private var lids: [SCNNode] = []
+    private var blinkTimer: Float = 2
+    private var blinkPhase: Float = -1
     private var lookYaw: Float = 0
     private var lookPitch: Float = 0
     private let phase: Float
@@ -231,6 +235,17 @@ final class Humanoid {
             pupilNode.simdScale = V3(0.0035, 0.0035, 0.0016)
             pupilNode.simdPosition = V3(x, 0.119, 0.0955)
             head.add(pupilNode)
+
+            // Веко: в открытом глазу почти целиком спрятано под надбровьем.
+            let lidPivot = SCNNode()
+            lidPivot.simdPosition = V3(x, 0.1255, 0.0815)
+            let lid = SCNNode(SCNSphere(radius: 1), skin)
+            lid.simdScale = V3(0.0142, 0.0142, 0.0142)
+            lid.simdPosition = V3(0, -0.0065, 0)
+            lidPivot.addChildNode(lid)
+            lidPivot.simdScale = V3(1, 0.05, 1)
+            head.add(lidPivot)
+            lids.append(lidPivot)
         }
 
         let hairMesh = MeshCache.mesh("hair-\(look.name)-\(look.hair)") {
@@ -361,6 +376,26 @@ final class Humanoid {
         }
         neck.simdEulerAngles += V3(lookPitch * 0.4, lookYaw * 0.4, 0)
         head.simdEulerAngles += V3(lookPitch * 0.6, lookYaw * 0.6, 0)
+        updateBlink(dt: dt)
+    }
+
+    /// Моргание раз в 2–6 секунд: веко опускается и поднимается за ~0.15 с.
+    private func updateBlink(dt: Float) {
+        guard dt > 0 else { return }
+        if blinkPhase < 0 {
+            blinkTimer -= dt
+            if blinkTimer <= 0 {
+                blinkPhase = 0
+                blinkTimer = Float.random(in: 2...6)
+            }
+        } else {
+            blinkPhase += dt / 0.16
+            if blinkPhase >= 1 { blinkPhase = -1 }
+        }
+        let closed: Float = blinkPhase < 0 ? 0 : sin(blinkPhase * Float.pi)
+        for lid in lids {
+            lid.simdScale = V3(1, 0.05 + closed * 0.95, 1)
+        }
     }
 
     private func apply(_ p: Pose, time: Float, breathe: Bool) {

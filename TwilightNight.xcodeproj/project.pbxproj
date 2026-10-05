@@ -15,6 +15,7 @@
 		1005276EE2924DD9363ED747 /* DisplayLinkDriver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 357AA8EBCF7B228ABEEA3A41 /* DisplayLinkDriver.swift */; };
 		7BEF480F1D82A4AD18F8A2DC /* GameCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FB5DD4761B54B712E127362 /* GameCore.swift */; };
 		312705409B0FF91C6B0E98CF /* GameEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E1672520D1E4DAA43E315D4 /* GameEngine.swift */; };
+		17E461415B57B925A6104053 /* SoundFX.swift in Sources */ = {isa = PBXBuildFile; fileRef = 382D6367F2B62B279FDE83B6 /* SoundFX.swift */; };
 		05B6A20A97E51C156A806D73 /* Soundtrack.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0358FDC47B8EC10D2D2F701 /* Soundtrack.swift */; };
 		02CEDE89411962713104F221 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 175663078D40232431000509 /* Theme.swift */; };
 		521A5E855B69D509006A048B /* BaseballScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E7F5F19F7EF3F95260F86F8 /* BaseballScene.swift */; };
@@ -57,6 +58,7 @@
 		357AA8EBCF7B228ABEEA3A41 /* DisplayLinkDriver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayLinkDriver.swift; sourceTree = "<group>"; };
 		3FB5DD4761B54B712E127362 /* GameCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameCore.swift; sourceTree = "<group>"; };
 		9E1672520D1E4DAA43E315D4 /* GameEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameEngine.swift; sourceTree = "<group>"; };
+		382D6367F2B62B279FDE83B6 /* SoundFX.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundFX.swift; sourceTree = "<group>"; };
 		D0358FDC47B8EC10D2D2F701 /* Soundtrack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Soundtrack.swift; sourceTree = "<group>"; };
 		175663078D40232431000509 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		5E7F5F19F7EF3F95260F86F8 /* BaseballScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseballScene.swift; sourceTree = "<group>"; };
@@ -136,6 +138,7 @@
 				357AA8EBCF7B228ABEEA3A41 /* DisplayLinkDriver.swift */,
 				3FB5DD4761B54B712E127362 /* GameCore.swift */,
 				9E1672520D1E4DAA43E315D4 /* GameEngine.swift */,
+				382D6367F2B62B279FDE83B6 /* SoundFX.swift */,
 				D0358FDC47B8EC10D2D2F701 /* Soundtrack.swift */,
 				175663078D40232431000509 /* Theme.swift */,
 			);
@@ -315,6 +318,7 @@
 				1005276EE2924DD9363ED747 /* DisplayLinkDriver.swift in Sources */,
 				7BEF480F1D82A4AD18F8A2DC /* GameCore.swift in Sources */,
 				312705409B0FF91C6B0E98CF /* GameEngine.swift in Sources */,
+				17E461415B57B925A6104053 /* SoundFX.swift in Sources */,
 				05B6A20A97E51C156A806D73 /* Soundtrack.swift in Sources */,
 				02CEDE89411962713104F221 /* Theme.swift in Sources */,
 				521A5E855B69D509006A048B /* BaseballScene.swift in Sources */,

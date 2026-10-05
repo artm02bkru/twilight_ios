@@ -131,6 +131,10 @@ final class MeadowStage: Stage3D {
         placeCamera(eye: V3(0, 3.2, 11), target: V3(0, 1, 0), fov: 62)
     }
 
+    override var ambience: [SoundFX.Ambience: Float] { [.forest: 0.6, .wind: 0.25] }
+
+    private var wasInSun = false
+
     override func updateAmbient(dt: Float) {
         for h in [bella, edward] { h.update(dt: dt, time: time) }
     }
@@ -187,6 +191,8 @@ final class MeadowStage: Stage3D {
         // Кожа на солнце горит алмазами; в тени — лишь редкие искры.
         let sun = sunlight(at: x, engine: engine)
         edward.setSparkle(max(sun, Float(s.glitter) * 0.12))
+        if sun > 0.5 && !wasInSun { SoundFX.shared.play(.chime, volume: 0.6) }
+        wasInSun = sun > 0.5
         bella.lookAt = edward.head.simdWorldPosition
         if s.hurtFlash > 0.9 { shake = 0.6 }
 
@@ -228,6 +234,7 @@ final class MeadowStage: Stage3D {
             edward.lookAt = bella.head.simdWorldPosition
             bella.lookAt = edward.head.simdWorldPosition
         case .edwardSteps:
+            SoundFX.shared.play(.chime, volume: 0.8, delay: 2.0)
             heroBeam.set(x: 2.2, radius: 1.4, strength: 1)
             heroBeam.node.simdPosition = V3(2.2, 0, -17.2)
             bella.place(V3(0.4, 0, -14.6), yaw: -Float.pi + 0.5)

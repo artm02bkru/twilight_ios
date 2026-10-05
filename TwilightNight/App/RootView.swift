@@ -68,6 +68,7 @@ struct RootView: View {
             switch phase {
             case .active:
                 music.resumeIfNeeded()
+                SoundFX.shared.resume()
             case .inactive, .background:
                 // Свернули игру — ставим на паузу, чтобы не потерять жизнь.
                 engine.pause()
