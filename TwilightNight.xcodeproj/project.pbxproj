@@ -16,6 +16,7 @@
 		1005276EE2924DD9363ED747 /* DisplayLinkDriver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 357AA8EBCF7B228ABEEA3A41 /* DisplayLinkDriver.swift */; };
 		7BEF480F1D82A4AD18F8A2DC /* GameCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FB5DD4761B54B712E127362 /* GameCore.swift */; };
 		312705409B0FF91C6B0E98CF /* GameEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E1672520D1E4DAA43E315D4 /* GameEngine.swift */; };
+		70B9E59BAE3E58CA581ED771 /* License.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60C049876182D335BEB78D22 /* License.swift */; };
 		17E461415B57B925A6104053 /* SoundFX.swift in Sources */ = {isa = PBXBuildFile; fileRef = 382D6367F2B62B279FDE83B6 /* SoundFX.swift */; };
 		05B6A20A97E51C156A806D73 /* Soundtrack.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0358FDC47B8EC10D2D2F701 /* Soundtrack.swift */; };
 		02CEDE89411962713104F221 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 175663078D40232431000509 /* Theme.swift */; };
@@ -27,6 +28,7 @@
 		39F35378A5FADA87D32A8500 /* StudioScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D86AA26206056510627CA80 /* StudioScene.swift */; };
 		612BBF1CDF8F0A3F84787E6E /* VanScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89152C6A46A48AA528D22C67 /* VanScene.swift */; };
 		BA929914C303AACEF077E18D /* WeddingScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADA0619E232AE9B3F2E6642D /* WeddingScene.swift */; };
+		D18893D73B212EE9698ADC7D /* ActivationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CD7FBD6850E245BE1A53291 /* ActivationView.swift */; };
 		FA2AF436CF9087B8C5396FF4 /* CutsceneOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CDE00555D5073C899BF0A8D /* CutsceneOverlay.swift */; };
 		DDFD5C6F41111915E50B880E /* HudView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2CC4DC9DCC7D47F7309D1E5 /* HudView.swift */; };
 		8A47501668C9D977165D212F /* MainMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98561121099F26E953CA1E44 /* MainMenu.swift */; };
@@ -76,6 +78,7 @@
 		357AA8EBCF7B228ABEEA3A41 /* DisplayLinkDriver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayLinkDriver.swift; sourceTree = "<group>"; };
 		3FB5DD4761B54B712E127362 /* GameCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameCore.swift; sourceTree = "<group>"; };
 		9E1672520D1E4DAA43E315D4 /* GameEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameEngine.swift; sourceTree = "<group>"; };
+		60C049876182D335BEB78D22 /* License.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = License.swift; sourceTree = "<group>"; };
 		382D6367F2B62B279FDE83B6 /* SoundFX.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundFX.swift; sourceTree = "<group>"; };
 		D0358FDC47B8EC10D2D2F701 /* Soundtrack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Soundtrack.swift; sourceTree = "<group>"; };
 		175663078D40232431000509 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
@@ -87,6 +90,7 @@
 		5D86AA26206056510627CA80 /* StudioScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudioScene.swift; sourceTree = "<group>"; };
 		89152C6A46A48AA528D22C67 /* VanScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VanScene.swift; sourceTree = "<group>"; };
 		ADA0619E232AE9B3F2E6642D /* WeddingScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeddingScene.swift; sourceTree = "<group>"; };
+		1CD7FBD6850E245BE1A53291 /* ActivationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivationView.swift; sourceTree = "<group>"; };
 		5CDE00555D5073C899BF0A8D /* CutsceneOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CutsceneOverlay.swift; sourceTree = "<group>"; };
 		E2CC4DC9DCC7D47F7309D1E5 /* HudView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HudView.swift; sourceTree = "<group>"; };
 		98561121099F26E953CA1E44 /* MainMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainMenu.swift; sourceTree = "<group>"; };
@@ -173,6 +177,7 @@
 				357AA8EBCF7B228ABEEA3A41 /* DisplayLinkDriver.swift */,
 				3FB5DD4761B54B712E127362 /* GameCore.swift */,
 				9E1672520D1E4DAA43E315D4 /* GameEngine.swift */,
+				60C049876182D335BEB78D22 /* License.swift */,
 				382D6367F2B62B279FDE83B6 /* SoundFX.swift */,
 				D0358FDC47B8EC10D2D2F701 /* Soundtrack.swift */,
 				175663078D40232431000509 /* Theme.swift */,
@@ -198,6 +203,7 @@
 		AB0B94FD80CB4E24BA6D81F3 /* UI */ = {
 			isa = PBXGroup;
 			children = (
+				1CD7FBD6850E245BE1A53291 /* ActivationView.swift */,
 				5CDE00555D5073C899BF0A8D /* CutsceneOverlay.swift */,
 				E2CC4DC9DCC7D47F7309D1E5 /* HudView.swift */,
 				98561121099F26E953CA1E44 /* MainMenu.swift */,
@@ -371,6 +377,7 @@
 				1005276EE2924DD9363ED747 /* DisplayLinkDriver.swift in Sources */,
 				7BEF480F1D82A4AD18F8A2DC /* GameCore.swift in Sources */,
 				312705409B0FF91C6B0E98CF /* GameEngine.swift in Sources */,
+				70B9E59BAE3E58CA581ED771 /* License.swift in Sources */,
 				17E461415B57B925A6104053 /* SoundFX.swift in Sources */,
 				05B6A20A97E51C156A806D73 /* Soundtrack.swift in Sources */,
 				02CEDE89411962713104F221 /* Theme.swift in Sources */,
@@ -382,6 +389,7 @@
 				39F35378A5FADA87D32A8500 /* StudioScene.swift in Sources */,
 				612BBF1CDF8F0A3F84787E6E /* VanScene.swift in Sources */,
 				BA929914C303AACEF077E18D /* WeddingScene.swift in Sources */,
+				D18893D73B212EE9698ADC7D /* ActivationView.swift in Sources */,
 				FA2AF436CF9087B8C5396FF4 /* CutsceneOverlay.swift in Sources */,
 				DDFD5C6F41111915E50B880E /* HudView.swift in Sources */,
 				8A47501668C9D977165D212F /* MainMenu.swift in Sources */,

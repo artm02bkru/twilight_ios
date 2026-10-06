@@ -10,3 +10,7 @@ __MACOSX/
 TwilightNight/Audio/*.mp3
 TwilightNight/Audio/*.m4a
 TwilightNight/Audio/*.wav
+
+# Сервер лицензий
+__pycache__/
+*.db
