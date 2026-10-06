@@ -1,48 +1,66 @@
 import SwiftUI
 
-/// Раннер для трёх глав: бегство по Порт-Анджелесу, полёт через лес, ночная погоня.
-/// Игрок ведёт пальцем влево-вправо, препятствия набегают навстречу.
+/// Раннер в духе Subway Surfers для трёх глав: Порт-Анджелес, полёт через лес, ночная погоня.
+/// Три полосы; свайп влево-вправо — смена полосы, вверх — прыжок, вниз — подкат.
 struct RunnerScene {
 
     enum Kind {
-        /// Ночная улица: три полосы, преследователи и мусорные баки.
+        /// Ночная улица: незнакомцы, баки, вывески над головой.
         case street
-        /// Лес: свободное руление между стволами, высокая скорость.
+        /// Лес: стволы, поваленные деревья, низкие ветви.
         case forest
-        /// Шоссе: руление между машинами и завалами, за спиной — охотник.
+        /// Шоссе: только смена полосы, за спиной — охотник.
         case chase
     }
 
+    /// Тип препятствия определяет, как его пройти.
+    enum ObstacleType: Int {
+        /// Перегораживает полосу целиком — только обойти.
+        case block = 0
+        /// Низкое — перепрыгнуть.
+        case low = 1
+        /// Высокое — пролезть подкатом.
+        case high = 2
+    }
+
+    enum Swipe { case left, right, up, down }
+
     struct Obstacle: Identifiable {
         let id = UUID()
-        /// Горизонталь, −1...1.
-        var x: CGFloat
+        var lane: Int
         /// Дистанция, на которой препятствие стоит на трассе (метры).
         var at: Double
-        /// Вариант модели (бак, человек, ствол, машина…).
-        var variant: Int
-        /// Полуширина для столкновения, в единицах x.
-        var half: CGFloat
-        /// Огонёк-бонус вместо препятствия.
+        var type: ObstacleType
+        /// Огонёк-монета вместо препятствия.
         var pickup: Bool = false
         var consumed: Bool = false
+
+        /// Горизонталь −1...1 для сцены.
+        var x: CGFloat { RunnerScene.laneX(lane) }
+        /// Номер модели в сцене.
+        var variant: Int { type.rawValue }
     }
 
     let kind: Kind
     var duration: Double
     var time: Double = 0
-    /// Пройденная дистанция, метры.
     var distance: Double = 0
     var speed: Double
     var baseSpeed: Double
 
-    /// Положение игрока по горизонтали, −1...1.
+    var lane = 1
+    /// Плавное положение игрока по горизонтали, −1...1.
     var playerX: CGFloat = 0
+    /// Прыжок: оставшееся время и высота (0...1).
+    var jumpTime: Double = 0
+    var jumpHeight: Double = 0
+    /// Подкат: оставшееся время.
+    var slideTime: Double = 0
+
     var obstacles: [Obstacle] = []
-    var spawnAt: Double = 25
+    var spawnAt: Double = 30
     var hits = 0
     var collected = 0
-    /// Неуязвимость после столкновения, секунды.
     var invulnerable: Double = 0
     /// 0...1 — насколько близко преследователь (для погони).
     var danger: Double = 0.25
@@ -52,34 +70,36 @@ struct RunnerScene {
     private var scoreStep: Double = 0
     private var difficulty: CGFloat = 1
 
-    /// Сколько метров впереди видно и где появляются препятствия.
-    static let viewAhead: Double = 70
+    static let viewAhead: Double = 80
+    static let jumpDuration: Double = 0.75
+    static let slideDuration: Double = 0.8
 
     init(kind: Kind) {
         self.kind = kind
         switch kind {
         case .street:
             duration = 75
-            baseSpeed = 8.5
+            baseSpeed = 11
         case .forest:
             duration = 70
-            baseSpeed = 19
+            baseSpeed = 16
         case .chase:
             duration = 80
-            baseSpeed = 28
+            baseSpeed = 24
         }
         speed = baseSpeed
     }
 
-    var lanes: Bool { kind == .street }
-
     static func laneX(_ lane: Int) -> CGFloat { CGFloat(lane - 1) * 0.66 }
+
+    var isJumping: Bool { jumpTime > 0 }
+    var isSliding: Bool { slideTime > 0 }
+    var canJump: Bool { kind != .chase }
 
     mutating func start(difficulty: CGFloat = 1) {
         self = RunnerScene(kind: kind)
         self.difficulty = difficulty
         speed = baseSpeed * Double(difficulty)
-        spawnAt = 30
     }
 
     var progress: Double { min(1, time / duration) }
@@ -91,63 +111,78 @@ struct RunnerScene {
         invulnerable = max(0, invulnerable - dt)
         stumble.decay(ctx.dt * 2.5)
 
-        // Управление: полосы на улице, свободное руление в лесу и на шоссе.
-        if ctx.touching {
-            let target: CGFloat
-            if lanes {
-                let lane = min(2, max(0, Int(ctx.touchX * 3)))
-                target = Self.laneX(lane)
-            } else {
-                target = clamp((ctx.touchX - 0.5) * 2.2, -0.95, 0.95)
+        // Свайпы.
+        switch ctx.swipe {
+        case .left?:  lane = max(0, lane - 1)
+        case .right?: lane = min(2, lane + 1)
+        case .up?:
+            if canJump && !isJumping {
+                jumpTime = Self.jumpDuration
+                slideTime = 0
             }
-            let rate: CGFloat = lanes ? 14 : 7
-            playerX += (target - playerX) * min(1, ctx.dt * rate)
+        case .down?:
+            if canJump {
+                slideTime = Self.slideDuration
+                jumpTime = 0
+            }
+        case nil:
+            break
         }
+        let target = Self.laneX(lane)
+        playerX += (target - playerX) * min(1, ctx.dt * 16)
+
+        if jumpTime > 0 {
+            jumpTime = max(0, jumpTime - dt)
+            let t = 1 - jumpTime / Self.jumpDuration
+            jumpHeight = sin(t * .pi)
+        } else {
+            jumpHeight = 0
+        }
+        slideTime = max(0, slideTime - dt)
 
         // Скорость растёт к концу главы; после удара — проседает.
-        let ramp = 1 + progress * (kind == .street ? 0.35 : 0.5)
-        let targetSpeed = baseSpeed * Double(difficulty) * ramp * (stumble > 0.3 ? 0.6 : 1)
+        let ramp = 1 + progress * 0.4
+        let targetSpeed = baseSpeed * Double(difficulty) * ramp * (stumble > 0.3 ? 0.65 : 1)
         speed += (targetSpeed - speed) * min(1, dt * 2)
         distance += speed * dt
 
-        // Новые препятствия впереди.
         while spawnAt < distance + Self.viewAhead {
-            spawn(at: spawnAt)
+            spawnRow(at: spawnAt)
             let gap = spacing() / Double(difficulty)
-            spawnAt += gap * Double.random(in: 0.75...1.25)
+            spawnAt += gap * Double.random(in: 0.85...1.2)
         }
 
-        // Столкновения и бонусы.
+        // Столкновения: своя полоса и короткое окно по дистанции.
         for i in obstacles.indices where !obstacles[i].consumed {
             let rel = obstacles[i].at - distance
-            guard rel < 0.8 && rel > -1.2 else { continue }
-            let dx = abs(obstacles[i].x - playerX)
+            guard rel < 0.6 && rel > -0.8, obstacles[i].lane == lane else { continue }
             if obstacles[i].pickup {
-                if dx < obstacles[i].half + 0.14 {
-                    obstacles[i].consumed = true
-                    collected += 1
-                    outcome.score += 10
-                    outcome.banner = Banner(text: "+10", color: Theme.amber, x: 0.5 + playerX * 0.3,
-                                            y: 0.62, life: 0.6, total: 0.6)
-                }
-            } else if dx < obstacles[i].half + playerHalf, invulnerable <= 0 {
+                obstacles[i].consumed = true
+                collected += 1
+                outcome.score += 5
+                continue
+            }
+            let cleared: Bool
+            switch obstacles[i].type {
+            case .block: cleared = false
+            case .low:   cleared = jumpHeight > 0.45
+            case .high:  cleared = isSliding
+            }
+            if !cleared && invulnerable <= 0 {
                 obstacles[i].consumed = true
                 hit(&outcome)
             }
         }
-        obstacles.removeAll { $0.at < distance - 8 }
+        obstacles.removeAll { $0.at < distance - 10 }
 
-        // Очки за пройденный путь.
         scoreStep += speed * dt
-        let step = kind == .street ? 12.0 : 30.0
-        if scoreStep >= step {
-            scoreStep -= step
-            outcome.score += 3
+        if scoreStep >= 15 {
+            scoreStep -= 15
+            outcome.score += 2
         }
 
-        // Погоня: охотник отстаёт, пока едешь чисто.
         if kind == .chase {
-            danger = max(0, danger - dt * 0.035)
+            danger = max(0, danger - dt * 0.03)
         }
 
         if time >= duration {
@@ -160,14 +195,6 @@ struct RunnerScene {
         return outcome
     }
 
-    private var playerHalf: CGFloat {
-        switch kind {
-        case .street: return 0.12
-        case .forest: return 0.07
-        case .chase:  return 0.16
-        }
-    }
-
     private var finishLine: String {
         switch kind {
         case .street: return "ФАРЫ «ВОЛЬВО»!"
@@ -178,37 +205,34 @@ struct RunnerScene {
 
     private func spacing() -> Double {
         switch kind {
-        case .street: return 9
-        case .forest: return 14
-        case .chase:  return 26
+        case .street: return 16
+        case .forest: return 20
+        case .chase:  return 30
         }
     }
 
-    private mutating func spawn(at position: Double) {
-        // Иногда — огонёк вместо препятствия.
-        if Double.random(in: 0...1) < 0.22 {
-            let x: CGFloat = lanes ? Self.laneX(Int.random(in: 0...2)) : CGFloat.random(in: -0.8...0.8)
-            obstacles.append(Obstacle(x: x, at: position, variant: 0, half: 0.08, pickup: true))
-            return
+    /// Ряд препятствий: хотя бы одна полоса всегда свободна или проходима.
+    private mutating func spawnRow(at position: Double) {
+        let free = Int.random(in: 0...2)
+        for l in 0..<3 where l != free {
+            guard Double.random(in: 0...1) < 0.75 else { continue }
+            let type: ObstacleType
+            if canJump {
+                switch Int.random(in: 0...2) {
+                case 0:  type = .block
+                case 1:  type = .low
+                default: type = .high
+                }
+            } else {
+                type = .block
+            }
+            obstacles.append(Obstacle(lane: l, at: position, type: type))
         }
-        switch kind {
-        case .street:
-            // Одна-две полосы перекрыты, одна всегда свободна.
-            var lanesFree = [0, 1, 2].shuffled()
-            let blocked = Double.random(in: 0...1) < 0.35 ? 2 : 1
-            for _ in 0..<blocked {
-                let lane = lanesFree.removeFirst()
-                obstacles.append(Obstacle(x: Self.laneX(lane), at: position, variant: Int.random(in: 0...3), half: 0.2))
+        // Дорожка монет по свободной полосе.
+        if Double.random(in: 0...1) < 0.6 {
+            for k in 0..<5 {
+                obstacles.append(Obstacle(lane: free, at: position - 8 + Double(k) * 2.5, type: .block, pickup: true))
             }
-        case .forest:
-            let count = Double.random(in: 0...1) < 0.45 ? 2 : 1
-            for _ in 0..<count {
-                obstacles.append(Obstacle(x: CGFloat.random(in: -0.9...0.9), at: position + Double.random(in: -2...2),
-                                          variant: Int.random(in: 0...2), half: CGFloat.random(in: 0.07...0.12)))
-            }
-        case .chase:
-            let x = CGFloat([-0.55, 0, 0.55].randomElement() ?? 0) + CGFloat.random(in: -0.12...0.12)
-            obstacles.append(Obstacle(x: x, at: position, variant: Int.random(in: 0...2), half: 0.18))
         }
     }
 
@@ -228,7 +252,6 @@ struct RunnerScene {
                 outcome.banner = Banner(text: "УДАР!", color: Theme.bloodLight, x: 0.5, y: 0.5, life: 0.8, total: 0.8)
             }
         case .street, .forest:
-            // Каждое третье столкновение стоит жизни.
             if hits % 3 == 0 {
                 outcome.lifeDelta = -1
                 outcome.banner = Banner(text: kind == .street ? "ПОЙМАЛИ" : "ВРЕЗАЛИСЬ",

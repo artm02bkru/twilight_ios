@@ -60,6 +60,10 @@ final class GameEngine: ObservableObject {
     private var pendingTap: CGPoint? = nil
     private var pendingChoice: Int? = nil
     private var pendingConfirm = false
+    private var pendingSwipe: RunnerScene.Swipe? = nil
+    /// Откуда начался жест и сработал ли уже свайп в нём.
+    private var swipeOrigin: CGPoint = .zero
+    private var swipeUsed = false
     private var aspect: CGFloat = 0.75
     private var chapterStartScore = 0
 
@@ -336,11 +340,26 @@ final class GameEngine: ObservableObject {
         touching = true
         touchX = clamp(normalized.x, 0, 1)
         pendingTap = CGPoint(x: clamp(normalized.x, 0, 1), y: clamp(normalized.y, 0, 1))
+        swipeOrigin = normalized
+        swipeUsed = false
     }
 
     func touchMoved(_ normalized: CGPoint) {
         guard phase == .playing else { return }
         touchX = clamp(normalized.x, 0, 1)
+        // Свайп: достаточно сдвинуть палец на ~5% экрана в одну сторону.
+        guard !swipeUsed else { return }
+        let dx = (normalized.x - swipeOrigin.x) * aspect
+        let dy = normalized.y - swipeOrigin.y
+        let threshold: CGFloat = 0.05
+        if max(abs(dx), abs(dy)) > threshold {
+            swipeUsed = true
+            if abs(dx) > abs(dy) {
+                pendingSwipe = dx < 0 ? .left : .right
+            } else {
+                pendingSwipe = dy < 0 ? .up : .down
+            }
+        }
     }
 
     func touchEnded() {
@@ -402,8 +421,10 @@ final class GameEngine: ObservableObject {
             tap: pendingTap,
             choice: pendingChoice,
             confirm: pendingConfirm,
+            swipe: pendingSwipe,
             difficulty: difficulty.factor
         )
+        pendingSwipe = nil
         pendingTap = nil
         pendingChoice = nil
         pendingConfirm = false

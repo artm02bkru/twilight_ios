@@ -83,6 +83,14 @@ class RunnerStageBase: Stage3D {
         key.light?.shadowSampleCount = 4
     }
 
+    /// Камера «как в Subway Surfers»: строго сзади и сверху, по центру трассы,
+    /// лишь слегка следует за полосой игрока.
+    func runnerCamera(dt: Float, height: Float = 3.6, back: Float = 7.2) {
+        let x = playerX * 0.35
+        followCamera(eye: V3(x, height, playerZ + back), target: V3(x, 0.9, playerZ - 12),
+                     fov: 62, rate: 10, dt: max(dt, 0.016))
+    }
+
     /// Сбросить сегменты к началу пути.
     func resetSegments() {
         for (i, seg) in segments.enumerated() {
@@ -159,9 +167,13 @@ class RunnerStageBase: Stage3D {
         }
         for (variant, list) in pools {
             let start = used[variant] ?? 0
-            for i in start..<list.count { list[i].isHidden = true }
+            if start < list.count {
+                for i in start..<list.count { list[i].isHidden = true }
+            }
         }
-        for i in usedPickups..<pickups.count { pickups[i].isHidden = true }
+        if usedPickups < pickups.count {
+            for i in usedPickups..<pickups.count { pickups[i].isHidden = true }
+        }
     }
 
     func hideObstacles() {

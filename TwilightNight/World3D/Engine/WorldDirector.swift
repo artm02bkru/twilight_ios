@@ -93,6 +93,18 @@ final class WorldDirector: ObservableObject {
 
     func isReady(_ id: StageID) -> Bool { stages[id] != nil }
 
+    /// В раннерах важнее плавность: рендер в 75% разрешения и сглаживание 2x.
+    private func applyQuality(for stage: Stage3D) {
+        let native = view.window?.screen.scale ?? 2
+        if stage is RunnerStageBase {
+            view.contentScaleFactor = native * 0.75
+            view.antialiasingMode = .multisampling2X
+        } else {
+            view.contentScaleFactor = native
+            view.antialiasingMode = .multisampling4X
+        }
+    }
+
     // MARK: - Кадр
 
     private var memoryTimer: CGFloat = 0
@@ -114,6 +126,7 @@ final class WorldDirector: ObservableObject {
         if current != id {
             current = id
             modeKey = ""
+            applyQuality(for: stage)
             SoundFX.shared.ambience(stage.ambience)
             if view.scene == nil {
                 view.scene = stage.scene

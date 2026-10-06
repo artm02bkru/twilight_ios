@@ -29,6 +29,8 @@ struct SceneContext {
     var choice: Int? = nil
     /// Игрок нажал «Готово» (свадебные раунды).
     var confirm: Bool = false
+    /// Свайп в этом кадре (раннеры).
+    var swipe: RunnerScene.Swipe? = nil
     /// Сложность: больше 1 — быстрее и строже.
     var difficulty: CGFloat = 1
 }

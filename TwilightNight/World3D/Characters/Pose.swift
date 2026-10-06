@@ -465,6 +465,38 @@ struct Pose {
         return p
     }()
 
+    /// Прыжок: колени подтянуты, руки вверх.
+    static let jump: Pose = {
+        var p = Pose()
+        p.hipL = V3(-1.1, 0, 0.1)
+        p.hipR = V3(-0.6, 0, -0.1)
+        p.kneeL = 1.6
+        p.kneeR = 1.4
+        p.spine = V3(0.2, 0, 0)
+        p.shoulderL = V3(-0.4, 0, 0.9)
+        p.shoulderR = V3(-0.4, 0, -0.9)
+        p.elbowL = -0.6
+        p.elbowR = -0.6
+        return p
+    }()
+
+    /// Подкат: низко присел и откинулся назад.
+    static let slide: Pose = {
+        var p = Pose()
+        p.rootY = -0.62
+        p.hipL = V3(-1.55, 0, 0.1)
+        p.hipR = V3(-1.2, 0, -0.1)
+        p.kneeL = 0.4
+        p.kneeR = 1.8
+        p.spine = V3(-0.35, 0, 0)
+        p.head = V3(0.3, 0, 0)
+        p.shoulderL = V3(0.4, 0, 0.5)
+        p.shoulderR = V3(0.4, 0, -0.5)
+        p.elbowL = -0.2
+        p.elbowR = -0.2
+        return p
+    }()
+
     /// Шаг ходьбы. phase — фаза цикла в радианах, stride — 0...1.
     static func walk(_ phase: Float, stride: Float = 1) -> Pose {
         var p = Pose()

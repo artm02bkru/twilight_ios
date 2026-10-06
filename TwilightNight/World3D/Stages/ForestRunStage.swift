@@ -13,7 +13,7 @@ final class ForestRunStage: RunnerStageBase {
     private var obstacleGeometry: [SCNGeometry] = []
 
     init() {
-        super.init(xScale: 7, segmentLength: 120)
+        super.init(xScale: 3.3, segmentLength: 120)
         let root = scene.rootNode
 
         setSky(Textures.SkyStyle(
@@ -116,11 +116,51 @@ final class ForestRunStage: RunnerStageBase {
         return seg
     }
 
+    /// 0 — дерево поперёк полосы (обойти), 1 — поваленный ствол (перепрыгнуть),
+    /// 2 — низкая ветка (пролезть подкатом).
     override func makeObstacle(_ variant: Int) -> SCNNode {
-        let g = obstacleGeometry[min(variant, obstacleGeometry.count - 1)]
-        let n = SCNNode(geometry: g)
-        n.castsShadow = true
-        return n
+        switch variant {
+        case 1:
+            let n = SCNNode()
+            let log = SCNNode(SCNCylinder(radius: 0.32, height: 2.6), Materials.bark())
+            log.eulerAngles.z = Float.pi / 2
+            log.simdPosition = V3(0, 0.32, 0)
+            n.addChildNode(log)
+            let moss = SCNNode(SCNCylinder(radius: 0.33, height: 1.0), Materials.grass(tile: 1))
+            moss.eulerAngles.z = Float.pi / 2
+            moss.simdPosition = V3(0.4, 0.34, 0)
+            n.addChildNode(moss)
+            return n
+        case 2:
+            let n = SCNNode()
+            let branch = SCNNode(SCNCylinder(radius: 0.18, height: 3.0), Materials.bark())
+            branch.eulerAngles.z = Float.pi / 2 + 0.06
+            branch.simdPosition = V3(0, 1.45, 0)
+            n.addChildNode(branch)
+            let b = MeshBuilder()
+            var rng = SeededRandom(seed: 812)
+            for _ in 0..<40 {
+                let p = V3(rng.range(-1.4, 1.4), 1.45 + rng.range(-0.1, 0.25), rng.range(-0.3, 0.3))
+                let tip = p + V3(rng.range(-0.3, 0.3), rng.range(-0.4, 0.1), rng.range(-0.3, 0.3))
+                let c = UIColor(hex: 0x24442A)
+                b.addTriangle(p - V3(0.08, 0, 0), c, p + V3(0.08, 0, 0), c, tip, c, normal: V3(0, 1, 0))
+            }
+            let leaves = SCNNode(geometry: b.geometry(name: "branch-leaves"))
+            let m = Materials.matte(roughness: 0.8)
+            m.isDoubleSided = true
+            leaves.geometry?.materials = [m]
+            n.addChildNode(leaves)
+            for x: Float in [-1.6, 1.6] {
+                let post = SCNNode(SCNCylinder(radius: 0.2, height: 1.6), Materials.bark())
+                post.simdPosition = V3(x, 0.8, 0)
+                n.addChildNode(post)
+            }
+            return n
+        default:
+            let n = SCNNode(geometry: obstacleGeometry[0])
+            n.castsShadow = true
+            return n
+        }
     }
 
     // MARK: - Общее
@@ -173,17 +213,20 @@ final class ForestRunStage: RunnerStageBase {
     override func updateGameplay(_ engine: GameEngine, dt: Float) {
         let s = engine.forest
         playerZ = -Float(s.distance)
-        let newX = Float(s.playerX) * xScale
-        let lean = dt > 0 ? (newX - playerX) / max(dt, 0.001) : 0
-        playerX = newX
+        playerX = Float(s.playerX) * xScale
         placeRunners(running: dt > 0, dt: dt, speed: Float(s.speed))
-        edward.yaw = Float.pi - clampf(lean * 0.04, -0.5, 0.5)
-        if s.stumble > 0.9 { shake = 1 }
+        // Прыжок поднимает обоих, подкат — низко пригнуться.
+        edward.position.y = Float(s.jumpHeight) * 1.5
+        if s.isJumping {
+            edward.target = .jump
+            edward.rate = 18
+        } else if s.isSliding {
+            edward.target = .slide
+            edward.rate = 18
+        }
+        if s.stumble > 0.9 { shake = 0.6 }
         layoutObstacles(s)
-
-        let p = V3(playerX, 0, playerZ)
-        followCamera(eye: p + V3(-playerX * 0.25, 2.7, 6.2), target: p + V3(playerX * 0.1, 1.3, -12),
-                     fov: 64 + Float(s.speed) * 0.25, rate: 6, dt: max(dt, 0.016))
+        runnerCamera(dt: dt)
     }
 
     override func enterIdle() {

@@ -14,7 +14,7 @@ final class StreetStage: RunnerStageBase {
     private var runPhase: Float = 0
 
     init() {
-        super.init(xScale: 3.9, segmentLength: 80)
+        super.init(xScale: 3.3, segmentLength: 80)
         let root = scene.rootNode
 
         setSky(Textures.SkyStyle(
@@ -28,7 +28,7 @@ final class StreetStage: RunnerStageBase {
         addAmbient(color: UIColor(red: 0.18, green: 0.2, blue: 0.3, alpha: 1), intensity: 45)
 
         installSegments(count: 4)
-        prewarm(variants: [0, 1, 2, 3], count: 6)
+        prewarm(variants: [0, 1, 2], count: 6)
         useRunnerQuality(key: key)
 
         root.addChildNode(bella.node)
@@ -196,33 +196,48 @@ final class StreetStage: RunnerStageBase {
         return seg
     }
 
+    private var thugToggle = false
+
+    /// 0 — незнакомец (обойти), 1 — мусорный бак (перепрыгнуть), 2 — леса с вывеской (подкат).
     override func makeObstacle(_ variant: Int) -> SCNNode {
         switch variant {
-        case 1, 3:
-            let h = Humanoid(variant == 1 ? Cast.thugA : Cast.thugB)
+        case 0:
+            thugToggle.toggle()
+            let h = Humanoid(thugToggle ? Cast.thugA : Cast.thugB)
             h.node.setCastsShadow(true)
             h.snap(.handsInPockets)
             thugs[ObjectIdentifier(h.node)] = h
             return h.node
         case 2:
             let n = SCNNode()
-            let wood = Materials.wood(tile: 0.5, roughness: 0.7)
-            for (i, s) in [Float(0.9), 0.8, 0.6].enumerated() {
-                let crate = SCNNode(SCNBox(width: CGFloat(s), height: CGFloat(s), length: CGFloat(s), chamferRadius: 0.03), wood)
-                crate.simdPosition = V3(Float(i % 2) * 0.3 - 0.15, s / 2 + (i == 2 ? 0.9 : 0), Float(i) * 0.1)
-                crate.eulerAngles.y = Float(i) * 0.35
-                n.addChildNode(crate)
+            let steel = Materials.pbr(UIColor(white: 0.35, alpha: 1), roughness: 0.4, metalness: 0.8)
+            for x: Float in [-1.2, 1.2] {
+                let post = SCNNode(SCNCylinder(radius: 0.05, height: 1.5), steel)
+                post.simdPosition = V3(x, 0.75, 0)
+                n.addChildNode(post)
             }
+            let board = SCNNode(SCNBox(width: 2.6, height: 0.5, length: 0.08, chamferRadius: 0.02),
+                                Materials.pbr(UIColor(red: 0.85, green: 0.6, blue: 0.1, alpha: 1), roughness: 0.5))
+            board.simdPosition = V3(0, 1.45, 0)
+            n.addChildNode(board)
+            let text = SCNText(string: "ОСТОРОЖНО", extrusionDepth: 0.01)
+            text.font = UIFont.systemFont(ofSize: 0.22, weight: .heavy)
+            text.materials = [Materials.pbr(UIColor(white: 0.05, alpha: 1), roughness: 0.5)]
+            let t = SCNNode(geometry: text)
+            let (mn, mx) = t.boundingBox
+            t.pivot = SCNMatrix4MakeTranslation((mx.x - mn.x) / 2 + mn.x, (mx.y - mn.y) / 2 + mn.y, 0)
+            t.simdPosition = V3(0, 1.45, 0.05)
+            n.addChildNode(t)
             return n
         default:
             let n = SCNNode()
-            let bin = SCNNode(SCNCylinder(radius: 0.38, height: 1.0),
+            let bin = SCNNode(SCNCylinder(radius: 0.38, height: 0.9),
                               Materials.pbr(UIColor(hex: 0x2C3A2C), roughness: 0.5, metalness: 0.5))
-            bin.simdPosition = V3(0, 0.5, 0)
+            bin.simdPosition = V3(0, 0.45, 0)
             n.addChildNode(bin)
             let lid = SCNNode(SCNCylinder(radius: 0.42, height: 0.06),
                               Materials.pbr(UIColor(hex: 0x223022), roughness: 0.5, metalness: 0.5))
-            lid.simdPosition = V3(0, 1.03, 0)
+            lid.simdPosition = V3(0, 0.93, 0)
             n.addChildNode(lid)
             return n
         }
@@ -273,13 +288,18 @@ final class StreetStage: RunnerStageBase {
         let s = engine.portAngeles
         playerZ = -Float(s.distance)
         playerX = Float(s.playerX) * xScale
-        bella.place(V3(playerX, 0, playerZ), yaw: Float.pi)
+        bella.place(V3(playerX, Float(s.jumpHeight) * 1.3, playerZ), yaw: Float.pi)
         if dt > 0 { runBella(dt, speed: Float(s.speed)) }
-        if s.stumble > 0.9 { shake = 0.8 }
+        if s.isJumping {
+            bella.target = .jump
+            bella.rate = 18
+        } else if s.isSliding {
+            bella.target = .slide
+            bella.rate = 18
+        }
+        if s.stumble > 0.9 { shake = 0.6 }
         layoutObstacles(s)
-        let p = V3(playerX, 0, playerZ)
-        followCamera(eye: p + V3(-playerX * 0.3, 2.1, 4.8), target: p + V3(playerX * 0.1, 1.2, -9),
-                     fov: 62, rate: 6, dt: max(dt, 0.016))
+        runnerCamera(dt: dt, height: 3.2, back: 6.4)
     }
 
     override func enterIdle() {

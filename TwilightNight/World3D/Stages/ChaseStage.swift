@@ -27,7 +27,7 @@ final class ChaseStage: RunnerStageBase {
             sunDisc: true, seed: 72)
         nightSky = Textures.sky(night)
         dawnSky = Textures.sky(dawn)
-        super.init(xScale: 4.4, segmentLength: 150)
+        super.init(xScale: 3.6, segmentLength: 150)
         let root = scene.rootNode
 
         scene.background.contents = nightSky
@@ -39,7 +39,7 @@ final class ChaseStage: RunnerStageBase {
         addAmbient(color: UIColor(red: 0.2, green: 0.22, blue: 0.3, alpha: 1), intensity: 40)
 
         installSegments(count: 4)
-        prewarm(variants: [0, 1, 2], count: 4)
+        prewarm(variants: [0], count: 9)
         useRunnerQuality(key: key)
 
         root.addChildNode(car.node)
@@ -154,8 +154,12 @@ final class ChaseStage: RunnerStageBase {
         return seg
     }
 
+    private var obstacleKind = 0
+
+    /// На шоссе все препятствия перекрывают полосу; модели чередуются: машина, бревно, барьер.
     override func makeObstacle(_ variant: Int) -> SCNNode {
-        switch variant {
+        obstacleKind = (obstacleKind + 1) % 3
+        switch obstacleKind {
         case 0:
             // Заглохшая машина с аварийкой.
             let stalled = Vehicle.sedan(color: [UIColor(hex: 0x6A2A22), UIColor(hex: 0x8A8A80), UIColor(hex: 0x2A3A4A)].randomElement()!,
@@ -239,18 +243,14 @@ final class ChaseStage: RunnerStageBase {
     override func updateGameplay(_ engine: GameEngine, dt: Float) {
         let s = engine.chase
         let newX = Float(s.playerX) * xScale
-        let steer = dt > 0 ? clampf((newX - playerX) / max(dt, 0.001) * 0.06, -0.35, 0.35) : 0
+        let steer = dt > 0 ? clampf((newX - playerX) / max(dt, 0.001) * 0.04, -0.25, 0.25) : 0
         playerX = newX
         playerZ = -Float(s.distance)
         hunterDistance = damp(hunterDistance, lerpf(34, 4.5, Float(s.danger)), 2, max(dt, 0.001))
         placeCar(x: playerX, z: playerZ, steer: steer, speed: Float(s.speed), dt: dt)
-        if s.stumble > 0.9 { shake = 1 }
+        if s.stumble > 0.9 { shake = 0.6 }
         layoutObstacles(s)
-
-        let p = V3(playerX, 0, playerZ)
-        followCamera(eye: p + V3(-playerX * 0.3, 2.4, 7.2), target: p + V3(playerX * 0.15, 0.8, -12),
-                     fov: 60 + Float(s.speed) * 0.12, rate: 5, dt: max(dt, 0.016))
-        cameraSettings.motionBlurIntensity = 0
+        runnerCamera(dt: dt, height: 3.4, back: 8)
     }
 
     override func enterIdle() {
