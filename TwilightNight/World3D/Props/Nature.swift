@@ -61,12 +61,11 @@ enum Nature {
     /// темнее у ствола и светлее на кончиках. Высота ~ height метров.
     static func addSpruce(to b: MeshBuilder, at p: V3, height: Float, rng: inout SeededRandom,
                           needle: UIColor = UIColor(hex: 0x1C3520), branchStart: Float = 0.1,
-                          trunkRadius: Float? = nil) {
+                          trunkRadius: Float? = nil, tiers: Int = 14) {
         b.addCylinder(bottom: SCNVector3(p.x, p.y - 0.3, p.z), radius: trunkRadius ?? height * 0.022,
                       height: height * 0.92, sides: trunkRadius == nil ? 6 : 12, color: UIColor(hex: 0x3A2A1E))
         let base = needle.rgba4
         let inner = base * SIMD4(0.45, 0.45, 0.45, 1)
-        let tiers = 14
         for i in 0..<tiers {
             let t = Float(i) / Float(tiers)
             let y = p.y + height * (branchStart + t * (0.92 - branchStart))

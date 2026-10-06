@@ -28,6 +28,8 @@ final class StreetStage: RunnerStageBase {
         addAmbient(color: UIColor(red: 0.18, green: 0.2, blue: 0.3, alpha: 1), intensity: 45)
 
         installSegments(count: 4)
+        prewarm(variants: [0, 1, 2, 3], count: 6)
+        useRunnerQuality(key: key)
 
         root.addChildNode(bella.node)
         bella.node.setCastsShadow(true)
@@ -141,7 +143,7 @@ final class StreetStage: RunnerStageBase {
 
         // Фонари.
         let pole = Materials.pbr(UIColor(white: 0.2, alpha: 1), roughness: 0.4, metalness: 0.8)
-        for (side, lz) in [(Float(-1), Float(-20)), (Float(1), Float(-60))] {
+        for (side, lz) in [(index % 2 == 0 ? Float(-1) : Float(1), Float(-40))] {
             let base = V3(side * 7.6, 0, lz)
             let post = SCNNode(SCNCylinder(radius: 0.08, height: 6), pole)
             post.simdPosition = base + V3(0, 3, 0)

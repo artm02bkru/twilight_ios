@@ -9,9 +9,15 @@ struct BiologyOverlay: View {
     var body: some View {
         let s = engine.biology
         GeometryReader { geo in
-            let side = min(geo.size.width * 0.62, geo.size.height * 0.48)
-            VStack(spacing: 18) {
-                Spacer(minLength: geo.size.height * 0.13)
+            let side = min(geo.size.width * 0.55, geo.size.height * 0.4)
+            VStack(spacing: 14) {
+                Spacer(minLength: geo.size.height * 0.11)
+                Text("Какая фаза у клетки в центре? Сравните с картинками на кнопках")
+                    .font(Theme.body(14, weight: .semibold))
+                    .foregroundColor(Theme.ice)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+                    .allowsHitTesting(false)
                 ZStack {
                     MicroscopeSlide(phase: s.current, seed: s.seed, focus: s.focus)
                         .frame(width: side, height: side)
@@ -43,12 +49,28 @@ struct BiologyOverlay: View {
                         Button {
                             engine.choose(index)
                         } label: {
-                            Text(phase.title.uppercased())
-                                .font(Theme.body(16, weight: .heavy))
-                                .tracking(1.2)
+                            HStack(spacing: 10) {
+                                // Мини-схема фазы — сравните с препаратом.
+                                MicroscopeSlide(phase: phase, seed: 7, focus: 1, iconOnly: true)
+                                    .frame(width: 46, height: 46)
+                                    .clipShape(Circle())
+                                    .overlay(Circle().stroke(Color.white.opacity(0.4), lineWidth: 1))
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(phase.title.uppercased())
+                                        .font(Theme.body(15, weight: .heavy))
+                                        .tracking(1)
+                                    Text(phase.clue)
+                                        .font(Theme.body(11, weight: .medium))
+                                        .foregroundColor(.white.opacity(0.75))
+                                        .lineLimit(2)
+                                        .multilineTextAlignment(.leading)
+                                }
+                                Spacer(minLength: 0)
+                            }
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, 15)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 10)
                                 .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(fill(for: phase, s)))
                                 .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
                                     .stroke(Color.white.opacity(0.25), lineWidth: 1))
@@ -78,11 +100,18 @@ struct MicroscopeSlide: View {
     let phase: BiologyScene.Phase
     let seed: Int
     let focus: Double
+    /// Только главная клетка крупно — для иконок на кнопках.
+    var iconOnly: Bool = false
 
     var body: some View {
         Canvas { ctx, size in
             var rng = SeededRandom(seed: UInt64(seed))
             let w = size.width, h = size.height
+            if iconOnly {
+                ctx.fill(Path(CGRect(origin: .zero, size: size)), with: .color(Color(red: 0.97, green: 0.86, blue: 0.9)))
+                drawPhase(&ctx, in: CGRect(x: w * 0.06, y: h * 0.12, width: w * 0.88, height: h * 0.76), rng: &rng)
+                return
+            }
             // Окрашенная ткань.
             ctx.fill(Path(CGRect(origin: .zero, size: size)),
                      with: .radialGradient(Gradient(colors: [Color(red: 0.98, green: 0.88, blue: 0.9),
@@ -120,7 +149,8 @@ struct MicroscopeSlide: View {
         }
         .blur(radius: CGFloat((1 - focus) * 6))
         .overlay(
-            RadialGradient(colors: [.clear, .clear, Color.black.opacity(0.75)], center: .center, startRadius: 0, endRadius: 260)
+            RadialGradient(colors: [.clear, .clear, Color.black.opacity(iconOnly ? 0 : 0.75)],
+                           center: .center, startRadius: 0, endRadius: 260)
         )
     }
 

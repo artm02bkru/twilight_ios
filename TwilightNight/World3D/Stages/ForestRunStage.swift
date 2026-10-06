@@ -31,7 +31,7 @@ final class ForestRunStage: RunnerStageBase {
             let b = MeshBuilder()
             var rng = SeededRandom(seed: UInt64(700 + i))
             Nature.addSpruce(to: b, at: .zero, height: h, rng: &rng, needle: UIColor(hex: 0x1E3A22),
-                             branchStart: 0.3, trunkRadius: r)
+                             branchStart: 0.3, trunkRadius: r, tiers: 10)
             let g = b.geometry(name: "obstacle-tree")
             let m = Materials.matte(roughness: 0.9)
             m.isDoubleSided = true
@@ -41,6 +41,8 @@ final class ForestRunStage: RunnerStageBase {
         }
 
         installSegments(count: 4)
+        prewarm(variants: [0, 1, 2], count: 7)
+        useRunnerQuality(key: key)
 
         root.addChildNode(edward.node)
         edward.node.addChildNode(bella.node)
@@ -84,7 +86,7 @@ final class ForestRunStage: RunnerStageBase {
         seg.addChildNode(ground)
 
         // Мох и трава по краям тропы.
-        let moss = Nature.grassField(radius: 0, count: 9000, seed: UInt64(30 + index % 2), height: 0.08...0.3,
+        let moss = Nature.grassField(radius: 0, count: 3500, seed: UInt64(30 + index % 2), height: 0.08...0.3,
                                      colors: [UIColor(hex: 0x3C5A2A), UIColor(hex: 0x506A30), UIColor(hex: 0x6B6A3A)],
                                      avoid: nil, rect: SIMD2(28, L / 2))
         moss.simdPosition = V3(0, 0, -L / 2)
@@ -93,11 +95,11 @@ final class ForestRunStage: RunnerStageBase {
         // Лес по сторонам.
         let b = MeshBuilder()
         var rng = SeededRandom(seed: UInt64(900 + index % 2))
-        for _ in 0..<110 {
+        for _ in 0..<70 {
             let side: Float = rng.unit() > 0.5 ? 1 : -1
             let x = side * rng.range(9.5, 55)
             let z = -rng.range(0, L)
-            Nature.addSpruce(to: b, at: V3(x, 0, z), height: rng.range(16, 30), rng: &rng)
+            Nature.addSpruce(to: b, at: V3(x, 0, z), height: rng.range(16, 30), rng: &rng, tiers: abs(x) < 20 ? 11 : 7)
         }
         for _ in 0..<26 {
             let x = (rng.unit() > 0.5 ? 1 : -1) * rng.range(7, 30)
@@ -109,6 +111,7 @@ final class ForestRunStage: RunnerStageBase {
         m.isDoubleSided = true
         m.shaderModifiers = [.geometry: Materials.windModifier(strength: 0.005)]
         forest.geometry?.materials = [m]
+        forest.castsShadow = false
         seg.addChildNode(forest)
         return seg
     }
@@ -164,7 +167,7 @@ final class ForestRunStage: RunnerStageBase {
         resetSegments()
         bella.snap(.piggyback)
         edward.snap(Pose.carryRun(0))
-        cameraSettings.motionBlurIntensity = 0.35
+        cameraSettings.motionBlurIntensity = 0
     }
 
     override func updateGameplay(_ engine: GameEngine, dt: Float) {

@@ -31,7 +31,7 @@ struct BiologyScene {
 
     enum Stage { case showing, feedback }
 
-    static let slides = 15
+    static let slides = 12
 
     var slide = 0
     var current: Phase = .prophase
@@ -66,7 +66,7 @@ struct BiologyScene {
         pool = Array(pool.prefix(3))
         options = (pool + [phase]).shuffled()
         seed = Int.random(in: 1...100_000)
-        timeLimit = max(5, 9.5 - Double(slide) * 0.25) / Double(difficulty)
+        timeLimit = max(8, 15 - Double(slide) * 0.4) / Double(difficulty)
         timer = timeLimit
         stage = .showing
         chosen = nil
@@ -119,8 +119,7 @@ struct BiologyScene {
             mistakes += 1
             outcome.banner = Banner(text: phase == nil ? "ВРЕМЯ ВЫШЛО" : "ЭТО \(current.title.uppercased())",
                                     color: Theme.bloodLight, x: 0.5, y: 0.2, life: 1.6, total: 1.6, big: true)
-            // Каждая третья ошибка стоит жизни.
-            if mistakes % 3 == 0 { outcome.lifeDelta = -1 }
+            // Это урок, а не экзамен: ошибки не стоят жизней, только очков.
             feedbackTimer = 1.8
         }
     }

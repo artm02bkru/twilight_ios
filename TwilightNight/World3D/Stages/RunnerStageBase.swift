@@ -15,6 +15,8 @@ class RunnerStageBase: Stage3D {
     private var segments: [SCNNode] = []
     private var pools: [Int: [SCNNode]] = [:]
     private var pickups: [SCNNode] = []
+    /// Пулы уже созданы — новых узлов во время игры не строим.
+    private var isWarm = false
     /// Положение игрока по Z (вперёд — минус).
     var playerZ: Float = 0
     var playerX: Float = 0
@@ -61,6 +63,26 @@ class RunnerStageBase: Stage3D {
         }
     }
 
+    /// Заранее создать узлы препятствий и огоньков, чтобы во время бега ничего не строилось.
+    func prewarm(variants: [Int], count: Int, pickups pickupCount: Int = 8) {
+        for v in variants {
+            for i in 0..<count { _ = node(variant: v, index: i) }
+        }
+        for i in 0..<pickupCount { _ = pickup(index: i) }
+        hideObstacles()
+        isWarm = true
+    }
+
+    /// Облегчённая графика для быстрых сцен: без SSAO и размытия в движении,
+    /// тени попроще. На скорости разница не видна, а кадры — видны.
+    func useRunnerQuality(key: SCNNode) {
+        cameraSettings.screenSpaceAmbientOcclusionIntensity = 0
+        cameraSettings.motionBlurIntensity = 0
+        cameraSettings.wantsDepthOfField = false
+        key.light?.shadowMapSize = CGSize(width: 1024, height: 1024)
+        key.light?.shadowSampleCount = 4
+    }
+
     /// Сбросить сегменты к началу пути.
     func resetSegments() {
         for (i, seg) in segments.enumerated() {
@@ -88,6 +110,8 @@ class RunnerStageBase: Stage3D {
 
     private func node(variant: Int, index: Int) -> SCNNode {
         var list = pools[variant] ?? []
+        // Во время игры пул не растёт: если узлов не хватает — повторно используем последний.
+        if index >= list.count && isWarm, let last = list.last { return last }
         while list.count <= index {
             let n = makeObstacle(variant)
             n.isHidden = true
@@ -99,6 +123,7 @@ class RunnerStageBase: Stage3D {
     }
 
     private func pickup(index: Int) -> SCNNode {
+        if index >= pickups.count && isWarm, let last = pickups.last { return last }
         while pickups.count <= index {
             let n = makePickup()
             n.isHidden = true

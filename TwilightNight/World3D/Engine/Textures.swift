@@ -394,7 +394,21 @@ enum Textures {
     }()
 
     /// Номерной знак с надписью.
+    private static var plates: [String: UIImage] = [:]
+    private static let plateLock = NSLock()
+
     static func plate(_ text: String) -> UIImage {
+        plateLock.lock()
+        if let cached = plates[text] { plateLock.unlock(); return cached }
+        plateLock.unlock()
+        let image = drawPlate(text)
+        plateLock.lock()
+        plates[text] = image
+        plateLock.unlock()
+        return image
+    }
+
+    private static func drawPlate(_ text: String) -> UIImage {
         let size = CGSize(width: 256, height: 128)
         let renderer = UIGraphicsImageRenderer(size: size)
         return renderer.image { ctx in

@@ -388,12 +388,28 @@ struct MeshData {
     var triangles: [[UInt32]] = []
     var boneIndices: [SIMD4<UInt16>] = []
     var boneWeights: [SIMD4<Float>] = []
+    /// Ключ кеша: по нему переиспользуется готовая геометрия GPU.
+    var cacheKey: String? = nil
 
     var isEmpty: Bool { positions.isEmpty }
 
     /// SceneKit-геометрия: по элементу на каждый непустой слот.
     /// materials — по слоту; пустые слоты пропускаются.
     func geometry(materials: [SCNMaterial]) -> SCNGeometry {
+        // Готовая геометрия уже есть — делим буферы, меняем только материалы.
+        if let key = cacheKey, let cached = GeometryCache.get(key) {
+            let copy = (cached.geometry.copy() as? SCNGeometry) ?? cached.geometry
+            copy.materials = cached.slots.map { materials[min($0, materials.count - 1)] }
+            return copy
+        }
+        let built = buildGeometry()
+        if let key = cacheKey { GeometryCache.put(key, built) }
+        let copy = (built.geometry.copy() as? SCNGeometry) ?? built.geometry
+        copy.materials = built.slots.map { materials[min($0, materials.count - 1)] }
+        return copy
+    }
+
+    private func buildGeometry() -> (geometry: SCNGeometry, slots: [Int]) {
         let verts = positions.map { SCNVector3($0.x, $0.y, $0.z) }
         let norms = normals.map { SCNVector3($0.x, $0.y, $0.z) }
         let uv = uvs.map { CGPoint(x: CGFloat($0.x), y: CGFloat($0.y)) }
@@ -402,30 +418,34 @@ struct MeshData {
         if !uv.isEmpty { sources.append(SCNGeometrySource(textureCoordinates: uv)) }
 
         var elements: [SCNGeometryElement] = []
-        var mats: [SCNMaterial] = []
+        var slots: [Int] = []
         for (slot, tris) in triangles.enumerated() where !tris.isEmpty {
             elements.append(SCNGeometryElement(indices: tris, primitiveType: .triangles))
-            mats.append(materials[min(slot, materials.count - 1)])
+            slots.append(slot)
         }
-        let g = SCNGeometry(sources: sources, elements: elements)
-        g.materials = mats
-        return g
+        return (SCNGeometry(sources: sources, elements: elements), slots)
     }
 
     func boneIndexSource() -> SCNGeometrySource {
+        if let key = cacheKey, let s = GeometryCache.source(key + "#idx") { return s }
         let data = boneIndices.withUnsafeBufferPointer { Data(buffer: $0) }
-        return SCNGeometrySource(data: data, semantic: .boneIndices, vectorCount: boneIndices.count,
+        let src = SCNGeometrySource(data: data, semantic: .boneIndices, vectorCount: boneIndices.count,
                                  usesFloatComponents: false, componentsPerVector: 4,
                                  bytesPerComponent: MemoryLayout<UInt16>.size, dataOffset: 0,
                                  dataStride: MemoryLayout<SIMD4<UInt16>>.stride)
+        if let key = cacheKey { GeometryCache.putSource(key + "#idx", src) }
+        return src
     }
 
     func boneWeightSource() -> SCNGeometrySource {
+        if let key = cacheKey, let s = GeometryCache.source(key + "#w") { return s }
         let data = boneWeights.withUnsafeBufferPointer { Data(buffer: $0) }
-        return SCNGeometrySource(data: data, semantic: .boneWeights, vectorCount: boneWeights.count,
+        let src = SCNGeometrySource(data: data, semantic: .boneWeights, vectorCount: boneWeights.count,
                                  usesFloatComponents: true, componentsPerVector: 4,
                                  bytesPerComponent: MemoryLayout<Float>.size, dataOffset: 0,
                                  dataStride: MemoryLayout<SIMD4<Float>>.stride)
+        if let key = cacheKey { GeometryCache.putSource(key + "#w", src) }
+        return src
     }
 }
 
@@ -438,10 +458,38 @@ enum MeshCache {
         lock.lock()
         if let m = store[key] { lock.unlock(); return m }
         lock.unlock()
-        let m = build()
+        var m = build()
+        m.cacheKey = key
         lock.lock()
         store[key] = m
         lock.unlock()
         return m
+    }
+}
+
+/// Готовые GPU-геометрии сеток: десятки одинаковых машин и прохожих делят одни буферы.
+enum GeometryCache {
+    private static var geometries: [String: (geometry: SCNGeometry, slots: [Int])] = [:]
+    private static var sources: [String: SCNGeometrySource] = [:]
+    private static let lock = NSLock()
+
+    static func get(_ key: String) -> (geometry: SCNGeometry, slots: [Int])? {
+        lock.lock(); defer { lock.unlock() }
+        return geometries[key]
+    }
+
+    static func put(_ key: String, _ value: (geometry: SCNGeometry, slots: [Int])) {
+        lock.lock(); defer { lock.unlock() }
+        geometries[key] = value
+    }
+
+    static func source(_ key: String) -> SCNGeometrySource? {
+        lock.lock(); defer { lock.unlock() }
+        return sources[key]
+    }
+
+    static func putSource(_ key: String, _ value: SCNGeometrySource) {
+        lock.lock(); defer { lock.unlock() }
+        sources[key] = value
     }
 }

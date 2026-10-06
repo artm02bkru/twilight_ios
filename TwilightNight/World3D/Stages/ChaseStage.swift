@@ -39,6 +39,8 @@ final class ChaseStage: RunnerStageBase {
         addAmbient(color: UIColor(red: 0.2, green: 0.22, blue: 0.3, alpha: 1), intensity: 40)
 
         installSegments(count: 4)
+        prewarm(variants: [0, 1, 2], count: 4)
+        useRunnerQuality(key: key)
 
         root.addChildNode(car.node)
         car.setHeadlights(1)
@@ -118,15 +120,17 @@ final class ChaseStage: RunnerStageBase {
 
         // Лес вдоль шоссе.
         let b = MeshBuilder()
-        for _ in 0..<130 {
+        for _ in 0..<80 {
             let side: Float = rng.unit() > 0.5 ? 1 : -1
-            Nature.addSpruce(to: b, at: V3(side * rng.range(9, 60), 0, -rng.range(0, L)),
-                             height: rng.range(16, 32), rng: &rng)
+            let x = side * rng.range(9, 60)
+            Nature.addSpruce(to: b, at: V3(x, 0, -rng.range(0, L)),
+                             height: rng.range(16, 32), rng: &rng, tiers: abs(x) < 20 ? 10 : 7)
         }
         let forest = SCNNode(geometry: b.geometry(name: "highway-forest"))
         let m = Materials.matte(roughness: 0.9)
         m.isDoubleSided = true
         forest.geometry?.materials = [m]
+        forest.castsShadow = false
         seg.addChildNode(forest)
 
         // Дорожный знак.
@@ -246,7 +250,7 @@ final class ChaseStage: RunnerStageBase {
         let p = V3(playerX, 0, playerZ)
         followCamera(eye: p + V3(-playerX * 0.3, 2.4, 7.2), target: p + V3(playerX * 0.15, 0.8, -12),
                      fov: 60 + Float(s.speed) * 0.12, rate: 5, dt: max(dt, 0.016))
-        cameraSettings.motionBlurIntensity = 0.3
+        cameraSettings.motionBlurIntensity = 0
     }
 
     override func enterIdle() {
