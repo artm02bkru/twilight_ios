@@ -142,15 +142,37 @@ final class ModelAsset {
             guard vEnd <= blob.count else { return nil }
             let vertexData = blob.subdata(in: vStart..<vEnd)
             let count = info.vertexCount
-            let positions = SCNGeometrySource(data: vertexData, semantic: .vertex, vectorCount: count,
+            let skinned = (info.skinOffset ?? -1) >= 0
+            let positions: SCNGeometrySource
+            let normals: SCNGeometrySource
+            let uvs: SCNGeometrySource
+            if skinned {
+                // Для скиннинга SceneKit нужны отдельные (не перемежённые) буферы — как у процедурных тел.
+                var p = [SCNVector3](), n = [SCNVector3](), t = [CGPoint]()
+                p.reserveCapacity(count); n.reserveCapacity(count); t.reserveCapacity(count)
+                vertexData.withUnsafeBytes { raw in
+                    let f = raw.bindMemory(to: Float.self)
+                    for i in 0..<count {
+                        let o = i * 8
+                        p.append(SCNVector3(f[o], f[o + 1], f[o + 2]))
+                        n.append(SCNVector3(f[o + 3], f[o + 4], f[o + 5]))
+                        t.append(CGPoint(x: CGFloat(f[o + 6]), y: CGFloat(f[o + 7])))
+                    }
+                }
+                positions = SCNGeometrySource(vertices: p)
+                normals = SCNGeometrySource(normals: n)
+                uvs = SCNGeometrySource(textureCoordinates: t)
+            } else {
+                positions = SCNGeometrySource(data: vertexData, semantic: .vertex, vectorCount: count,
                                               usesFloatComponents: true, componentsPerVector: 3,
                                               bytesPerComponent: 4, dataOffset: 0, dataStride: stride)
-            let normals = SCNGeometrySource(data: vertexData, semantic: .normal, vectorCount: count,
+                normals = SCNGeometrySource(data: vertexData, semantic: .normal, vectorCount: count,
                                             usesFloatComponents: true, componentsPerVector: 3,
                                             bytesPerComponent: 4, dataOffset: 12, dataStride: stride)
-            let uvs = SCNGeometrySource(data: vertexData, semantic: .texcoord, vectorCount: count,
+                uvs = SCNGeometrySource(data: vertexData, semantic: .texcoord, vectorCount: count,
                                         usesFloatComponents: true, componentsPerVector: 2,
                                         bytesPerComponent: 4, dataOffset: 24, dataStride: stride)
+            }
             var elements: [SCNGeometryElement] = []
             for sub in info.submeshes {
                 let iEnd = sub.indexOffset + sub.indexCount * 4
@@ -167,13 +189,29 @@ final class ModelAsset {
                 let skinStride = 4 * 2 + 4 * 4
                 let sEnd = so + count * skinStride
                 guard sEnd <= blob.count else { return nil }
-                let skinData = blob.subdata(in: so..<sEnd)
-                indices = SCNGeometrySource(data: skinData, semantic: .boneIndices, vectorCount: count,
-                                            usesFloatComponents: false, componentsPerVector: 4,
-                                            bytesPerComponent: 2, dataOffset: 0, dataStride: skinStride)
-                weights = SCNGeometrySource(data: skinData, semantic: .boneWeights, vectorCount: count,
-                                            usesFloatComponents: true, componentsPerVector: 4,
-                                            bytesPerComponent: 4, dataOffset: 8, dataStride: skinStride)
+                var bi = [SIMD4<UInt16>](), bw = [SIMD4<Float>]()
+                bi.reserveCapacity(count); bw.reserveCapacity(count)
+                blob.withUnsafeBytes { raw in
+                    for i in 0..<count {
+                        let o = so + i * skinStride
+                        bi.append(SIMD4(raw.loadUnaligned(fromByteOffset: o, as: UInt16.self),
+                                        raw.loadUnaligned(fromByteOffset: o + 2, as: UInt16.self),
+                                        raw.loadUnaligned(fromByteOffset: o + 4, as: UInt16.self),
+                                        raw.loadUnaligned(fromByteOffset: o + 6, as: UInt16.self)))
+                        bw.append(SIMD4(raw.loadUnaligned(fromByteOffset: o + 8, as: Float.self),
+                                        raw.loadUnaligned(fromByteOffset: o + 12, as: Float.self),
+                                        raw.loadUnaligned(fromByteOffset: o + 16, as: Float.self),
+                                        raw.loadUnaligned(fromByteOffset: o + 20, as: Float.self)))
+                    }
+                }
+                indices = SCNGeometrySource(data: bi.withUnsafeBufferPointer { Data(buffer: $0) }, semantic: .boneIndices,
+                                            vectorCount: count, usesFloatComponents: false, componentsPerVector: 4,
+                                            bytesPerComponent: MemoryLayout<UInt16>.size, dataOffset: 0,
+                                            dataStride: MemoryLayout<SIMD4<UInt16>>.stride)
+                weights = SCNGeometrySource(data: bw.withUnsafeBufferPointer { Data(buffer: $0) }, semantic: .boneWeights,
+                                            vectorCount: count, usesFloatComponents: true, componentsPerVector: 4,
+                                            bytesPerComponent: MemoryLayout<Float>.size, dataOffset: 0,
+                                            dataStride: MemoryLayout<SIMD4<Float>>.stride)
             }
             parts[info.name] = Part(info: info, geometry: geometry, boneIndices: indices, boneWeights: weights)
             partOrder.append(info.name)

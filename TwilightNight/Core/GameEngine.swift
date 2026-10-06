@@ -163,6 +163,26 @@ final class GameEngine: ObservableObject {
         phase = .playing
     }
 
+    /// Фототур для CI: сразу открыть главу в нужном состоянии.
+    /// cutscene — кадр кат-сцены (shot), иначе игра (play) или карточка главы.
+    func tourShow(_ c: Chapter, cutscene id: CutsceneID?, shot: Int = 0, play: Bool = false) {
+        resetRun(score: 0, lives: Self.startLives)
+        chapter = c
+        if let id {
+            playCutscene(id)
+            if var playback = cutscene {
+                playback.index = min(shot, playback.script.shots.count - 1)
+                playback.shotTime = playback.shot.duration * 0.35
+                cutscene = playback
+            }
+        } else if play {
+            phase = .chapterCard
+            beginChapter()
+        } else {
+            phase = .chapterCard
+        }
+    }
+
     /// Игрок закрыл экран итогов главы.
     func advanceFromResult() {
         if let next = Chapter(rawValue: chapter.rawValue + 1) {

@@ -8,6 +8,7 @@ struct RootView: View {
     @StateObject private var clock = DisplayLinkDriver()
     @ObservedObject private var music = SoundtrackPlayer.shared
     @Environment(\.scenePhase) private var scenePhase
+    @State private var tour: ShotTour?
 
     var body: some View {
         GeometryReader { geo in
@@ -66,6 +67,11 @@ struct RootView: View {
                     director.tick(engine, dt: delta)
                 }
                 clock.start()
+                if ShotTour.isRequested && tour == nil {
+                    let t = ShotTour(engine: engine, director: director)
+                    tour = t
+                    t.run()
+                }
             }
             .onChange(of: geo.size) { newSize in
                 engine.setAspect(newSize.width / max(1, newSize.height))

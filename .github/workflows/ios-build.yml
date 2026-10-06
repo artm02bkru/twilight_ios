@@ -12,7 +12,9 @@ concurrency:
 jobs:
   build:
     runs-on: macos-15
-    timeout-minutes: 30
+    timeout-minutes: 45
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -30,9 +32,43 @@ jobs:
             -configuration Debug \
             -sdk iphonesimulator \
             -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/DerivedData \
             CODE_SIGNING_ALLOWED=NO \
             build 2>&1 | tee build.log | grep -E "error:|warning: unre|BUILD (SUCCEEDED|FAILED)" || true
           grep -q "BUILD SUCCEEDED" build.log
+
+      - name: Screenshot tour in iPad Simulator
+        if: github.ref == 'refs/heads/claude/lucid-lamport-0omusu'
+        timeout-minutes: 20
+        run: |
+          APP=$(find build/DerivedData -name "TwilightNight.app" -path "*iphonesimulator*" | head -1)
+          UDID=$(xcrun simctl list devices available -j | python3 -c "import json,sys;d=json.load(sys.stdin)['devices'];print(next(x['udid'] for k,v in d.items() if 'iOS' in k for x in v if 'iPad Pro' in x['name']))")
+          echo "app=$APP device=$UDID"
+          xcrun simctl boot "$UDID" || true
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl install "$UDID" "$APP"
+          BID=$(/usr/libexec/PlistBuddy -c "Print CFBundleIdentifier" "$APP/Info.plist")
+          xcrun simctl launch "$UDID" "$BID" -shotTour
+          C=""
+          for i in $(seq 1 200); do
+            C=$(xcrun simctl get_app_container "$UDID" "$BID" data)
+            [ -f "$C/Documents/shots/done.txt" ] && break
+            sleep 5
+          done
+          mkdir -p shots
+          cp "$C"/Documents/shots/*.jpg shots/ || true
+          xcrun simctl io "$UDID" screenshot shots/zz_last_screen.png || true
+          ls shots
+
+      - name: Publish shots to ci-shots branch
+        if: github.ref == 'refs/heads/claude/lucid-lamport-0omusu'
+        run: |
+          cd shots
+          git init -q
+          git checkout -q -b ci-shots
+          git add .
+          git -c user.name=ci -c user.email=ci@example.com commit -qm "Shots for ${GITHUB_SHA}"
+          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" ci-shots
 
       - name: Upload log
         if: always()

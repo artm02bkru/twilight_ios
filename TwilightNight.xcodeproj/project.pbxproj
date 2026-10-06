@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		AB7E85AEF9180ECAFBFCF8AD /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 485A10B163164F609489B4AC /* RootView.swift */; };
+		0433223FB7A724606E8ED509 /* ShotTour.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25152988F3C1AD44612B6A5B /* ShotTour.swift */; };
 		FBE71510F25C12005088F349 /* TwilightNightApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93E5C2DF0B294DCB2AEAF588 /* TwilightNightApp.swift */; };
 		3B58ADDCE11DAC47F1650980 /* BookContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E3AEAFCB191450298F4AF3 /* BookContent.swift */; };
 		0B9F058E6FD4996F8537D979 /* CutsceneScripts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B8B801F6A2F727220AB4E54 /* CutsceneScripts.swift */; };
@@ -67,6 +68,7 @@
 
 /* Begin PBXFileReference section */
 		485A10B163164F609489B4AC /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		25152988F3C1AD44612B6A5B /* ShotTour.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShotTour.swift; sourceTree = "<group>"; };
 		93E5C2DF0B294DCB2AEAF588 /* TwilightNightApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TwilightNightApp.swift; sourceTree = "<group>"; };
 		D4E3AEAFCB191450298F4AF3 /* BookContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookContent.swift; sourceTree = "<group>"; };
 		4B8B801F6A2F727220AB4E54 /* CutsceneScripts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CutsceneScripts.swift; sourceTree = "<group>"; };
@@ -156,6 +158,7 @@
 			isa = PBXGroup;
 			children = (
 				485A10B163164F609489B4AC /* RootView.swift */,
+				25152988F3C1AD44612B6A5B /* ShotTour.swift */,
 				93E5C2DF0B294DCB2AEAF588 /* TwilightNightApp.swift */,
 			);
 			path = App;
@@ -360,6 +363,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AB7E85AEF9180ECAFBFCF8AD /* RootView.swift in Sources */,
+				0433223FB7A724606E8ED509 /* ShotTour.swift in Sources */,
 				FBE71510F25C12005088F349 /* TwilightNightApp.swift in Sources */,
 				3B58ADDCE11DAC47F1650980 /* BookContent.swift in Sources */,
 				0B9F058E6FD4996F8537D979 /* CutsceneScripts.swift in Sources */,
