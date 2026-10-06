@@ -18,9 +18,11 @@ final class ClassroomStage: Stage3D {
     private let microscopeSpot = V3(-2.62, 0.69, 0.0)
     private let doorSpot = V3(3.55, 0, -3.4)
     /// Проход Беллы от двери к месту: вдоль доски, затем по проходу у окон.
-    private var bellaPath: [V3] { [doorSpot, V3(-1.46, 0, -2.85), V3(-1.46, 0, 0.62), V3(-1.95, 0, 0.62)] }
+    /// Проход Беллы: от двери по свободной полосе перед первой партой (за спиной учителя не проходит),
+    /// затем по проходу у окон к своему месту.
+    private var bellaPath: [V3] { [doorSpot, V3(1.6, 0, -2.45), V3(-1.46, 0, -2.45), V3(-1.46, 0, 0.66), V3(-1.95, 0, 0.66)] }
     /// Эдвард уходит: за стульями к проходу и к двери.
-    private var edwardPath: [V3] { [edwardSeat + V3(0, 0, 0.4), V3(-1.46, 0, 0.88), V3(-1.46, 0, -2.85), doorSpot] }
+    private var edwardPath: [V3] { [edwardSeat + V3(0, 0, 0.42), V3(-1.46, 0, 0.88), V3(-1.46, 0, -2.45), V3(1.6, 0, -2.45), doorSpot] }
     private var flicker = SCNNode()
 
     override init() {

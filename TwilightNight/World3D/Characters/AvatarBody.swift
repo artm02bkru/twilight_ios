@@ -183,7 +183,7 @@ final class AvatarBody {
     func tintOutfit(_ color: UIColor?) {
         for m in outfitMaterials {
             m.multiply.contents = color ?? UIColor.white
-            m.roughness.contents = color == nil ? 0.82 : 0.6
+            m.roughness.contents = color == nil ? 0.88 : 0.7
         }
     }
 
@@ -196,9 +196,12 @@ final class AvatarBody {
 
     private static func material(_ d: ModelAsset.Material, vampire: Bool) -> SCNMaterial {
         let m = ModelAsset.defaultMaterial(d)
+        // В FBX у всех материалов металличность 1.0 — кожа и ткань блестели как хром.
+        m.metalness.contents = 0.0
+        m.roughness.contents = 0.6
         switch d.name {
         case "AvatarHead", "AvatarBody":
-            m.roughness.contents = vampire ? 0.38 : 0.5
+            m.roughness.contents = vampire ? 0.5 : 0.58
             m.normal.intensity = 0.6
             if vampire {
                 // Бледнее и холоднее, искры в эмиссии погашены до выхода на солнце.
@@ -208,17 +211,17 @@ final class AvatarBody {
                 m.emission.contentsTransform = SCNMatrix4MakeScale(18, 18, 1)
                 m.emission.wrapS = .repeat
                 m.emission.wrapT = .repeat
-                m.clearCoat.contents = 0.3
-                m.clearCoatRoughness.contents = 0.25
+                m.clearCoat.contents = 0.08
+                m.clearCoatRoughness.contents = 0.4
             }
             let rim = vampire ? "float3(0.55, 0.62, 0.75)" : "float3(0.75, 0.28, 0.18)"
             m.shaderModifiers = [.surface: """
             float skinRim = 1.0 - max(dot(_surface.normal, _surface.view), 0.0);
-            _surface.emission.rgb += \(rim) * pow(skinRim, 3.0) * 0.12;
+            _surface.emission.rgb += \(rim) * pow(skinRim, 3.0) * 0.06;
             """]
         case "AvatarLeftEyeball", "AvatarRightEyeball":
-            m.roughness.contents = 0.08
-            m.clearCoat.contents = 1.0
+            m.roughness.contents = 0.15
+            m.clearCoat.contents = 0.5
             // Радужка темнее белка: по яркости находим её и перекрашиваем.
             m.shaderModifiers = [.surface: """
             #pragma arguments
@@ -233,14 +236,16 @@ final class AvatarBody {
             m.setValue(NSValue(scnVector3: SCNVector3(0, 0, 0)), forKey: "irisTint")
             m.setValue(NSNumber(value: Float(0)), forKey: "irisGlow")
         case "haircut":
-            m.roughness.contents = 0.45
+            m.roughness.contents = 0.62
             m.normal.intensity = 0.6
             ModelAsset.makeCutout(m)
         case "AvatarEyelashes":
             m.diffuse.contents = UIColor(white: 0.04, alpha: 1)
             m.roughness.contents = 0.6
         case "outfit":
-            m.roughness.contents = 0.82
+            m.roughness.contents = 0.88
+        case "AvatarTeethUpper", "AvatarTeethLower":
+            m.roughness.contents = 0.45
         default:
             break
         }

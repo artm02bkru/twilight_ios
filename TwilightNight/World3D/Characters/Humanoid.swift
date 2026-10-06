@@ -75,7 +75,7 @@ final class Humanoid {
         self.look = look
         phase = Float(Humanoid.stableHash(look.name) % 1000) / 1000 * 6.28
 
-        skin = Materials.pbr(look.skin, roughness: look.vampire ? 0.36 : 0.5,
+        skin = Materials.pbr(look.skin, roughness: look.vampire ? 0.48 : 0.58,
                              normal: Textures.skinNormal, normalIntensity: 0.3, tile: 1)
         skin.normal.contentsTransform = SCNMatrix4MakeScale(30, 30, 1)
         skin.normal.wrapS = .repeat
@@ -87,8 +87,8 @@ final class Humanoid {
             skin.emission.contentsTransform = SCNMatrix4MakeScale(18, 18, 1)
             skin.emission.wrapS = .repeat
             skin.emission.wrapT = .repeat
-            skin.clearCoat.contents = 0.3
-            skin.clearCoatRoughness.contents = 0.25
+            skin.clearCoat.contents = 0.08
+            skin.clearCoatRoughness.contents = 0.4
         } else {
             // Тёплый подповерхностный оттенок у живой кожи.
             skin.emission.contents = UIColor(red: 0.35, green: 0.08, blue: 0.05, alpha: 1)
