@@ -36,7 +36,8 @@ final class VanStage: Stage3D {
 
     override init() {
         super.init()
-        dentLight.simdPosition = V3(-5.2, 2.6, 1.9)
+        // Скользящий свет вдоль борта: рельеф вмятины читается тенью.
+        dentLight.simdPosition = V3(-3.7, 1.9, 4.2)
         dentLight.simdLook(at: V3(-3.38, 1.15, 0.0))
         scene.rootNode.addChildNode(dentLight)
         let root = scene.rootNode
@@ -372,7 +373,7 @@ final class VanStage: Stage3D {
         zone.isHidden = true
         zoneEdges.isHidden = true
         let showDent = cue == .lotDent || cue == .lotFacesBella || cue == .lotFacesEdward
-        dentLight.light?.intensity = showDent ? 1600 : 0
+        dentLight.light?.intensity = showDent ? 1100 : 0
         bella.lookAt = nil
         edward.lookAt = nil
         edward.opacity = 1
