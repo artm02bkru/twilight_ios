@@ -251,6 +251,26 @@ final class ModelAsset {
         return n
     }
 
+    /// Роща из частей-деревьев: копии со случайным поворотом и размером, склеенные в одну
+    /// геометрию на материал (мало вызовов отрисовки).
+    static func grove(parts: [(model: String, part: String)], spots: [V3], scale: ClosedRange<Float>,
+                      seed: UInt64) -> SCNNode? {
+        var rng = SeededRandom(seed: seed)
+        let group = SCNNode()
+        for (i, p) in spots.enumerated() {
+            let pick = parts[i % max(1, parts.count)]
+            guard let t = ModelAsset.named(pick.model)?.grounded(pick.part) else { continue }
+            t.simdPosition = p
+            t.simdEulerAngles.y = rng.range(0, 6.28)
+            t.simdScale = V3(repeating: rng.range(scale.lowerBound, scale.upperBound))
+            group.addChildNode(t)
+        }
+        guard !group.childNodes.isEmpty else { return nil }
+        let flat = group.flattenedClone()
+        flat.castsShadow = false
+        return flat
+    }
+
     /// Все части одним узлом (статичная модель).
     func wholeNode(material: (Material) -> SCNMaterial? = { _ in nil }) -> SCNNode {
         let root = SCNNode()

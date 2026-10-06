@@ -36,7 +36,7 @@ final class SoundtrackPlayer: ObservableObject {
             return
         }
 
-        guard let url = Self.findTrack(),
+        guard let url = trackURL ?? Self.findTrack(),
               let player = try? AVAudioPlayer(contentsOf: url) else {
             // Трека нет в сборке — просто играем без музыки, без падения.
             NSLog("SoundtrackPlayer: \(Self.resourceName).\(Self.resourceExtension) не найден в бандле")
@@ -47,6 +47,7 @@ final class SoundtrackPlayer: ObservableObject {
         player.volume = 0
         player.prepareToPlay()
         self.player = player
+        trackURL = url
 
         guard !isMuted else { return }
         player.play()
@@ -85,6 +86,48 @@ final class SoundtrackPlayer: ObservableObject {
         fade(to: volume, over: duration)
     }
 
+    /// Вернуть обычную громкость после приглушения.
+    func unduck() {
+        guard !isMuted, player != nil else { return }
+        fade(to: Self.normalVolume, over: 0.8)
+    }
+
+    // MARK: - Музыка по главам
+
+    private var trackKey = ""
+    private var trackURL: URL?
+
+    /// Выбрать музыку для места игры: файл `music_<key>` в папке Audio
+    /// (menu, prologue, biology, van, portAngeles, meadow, forest, baseball, chase, studio, prom, wedding, finale).
+    /// Если такого файла нет — играет общий трек.
+    func select(_ key: String) {
+        guard key != trackKey else { return }
+        trackKey = key
+        let url = SoundFX.audioURL("music_" + key) ?? Self.findTrack()
+        guard let url, url != trackURL else { return }
+        if player == nil {
+            trackURL = url
+            return
+        }
+        switchTo(url)
+    }
+
+    private func switchTo(_ url: URL) {
+        trackURL = url
+        let start = { [weak self] in
+            guard let self, self.trackURL == url, let next = try? AVAudioPlayer(contentsOf: url) else { return }
+            self.player?.stop()
+            next.numberOfLoops = -1
+            next.volume = 0
+            next.prepareToPlay()
+            self.player = next
+            guard !self.isMuted else { return }
+            next.play()
+            self.fade(to: Self.normalVolume, over: 1.4)
+        }
+        if isMuted { start() } else { fade(to: 0, over: 0.7, completion: start) }
+    }
+
     // MARK: - Внутреннее
 
     /// Ищет трек: сначала по имени, потом любой mp3/m4a в папке Audio.
@@ -94,8 +137,13 @@ final class SoundtrackPlayer: ObservableObject {
             ?? bundle.url(forResource: resourceName, withExtension: resourceExtension) {
             return url
         }
+        if let url = SoundFX.audioURL("music_default") { return url }
+        // Любой трек, кроме звуков с приставками (фоны, эффекты, реплики, музыка глав).
+        let prefixes = ["amb_", "sfx_", "vo_", "music_"]
         for ext in ["mp3", "m4a", "aac", "wav"] {
-            if let url = bundle.urls(forResourcesWithExtension: ext, subdirectory: "Audio")?.first {
+            let urls = bundle.urls(forResourcesWithExtension: ext, subdirectory: "Audio") ?? []
+            if let url = urls.sorted(by: { $0.lastPathComponent < $1.lastPathComponent })
+                .first(where: { u in !prefixes.contains { u.lastPathComponent.hasPrefix($0) } }) {
                 return url
             }
         }

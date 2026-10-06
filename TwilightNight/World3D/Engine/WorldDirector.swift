@@ -150,6 +150,7 @@ final class WorldDirector: ObservableObject {
                     modeKey = key
                     stage.setCinematic(true)
                     stage.beginShot(playback.shot.cue)
+                    SoundFX.shared.voice("\(playback.shot.cue)")
                 }
                 stage.updateShot(playback.shot.cue, progress: Float(playback.progress), dt: fdt)
             }
@@ -157,6 +158,7 @@ final class WorldDirector: ObservableObject {
         case .playing, .paused, .gameOver:
             if modeKey != "game" {
                 modeKey = "game"
+                SoundFX.shared.stopVoice()
                 stage.setCinematic(false)
                 stage.enterGameplay()
             }

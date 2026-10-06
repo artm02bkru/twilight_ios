@@ -311,15 +311,31 @@ final class Vehicle {
 
     /// Синий пикап из модели «Vehicle SUV» (одна сетка с текстурным атласом) — для парковок и трассы.
     /// tint затемняет или осветляет атлас, чтобы машины не были одинаковыми.
-    static func suv(tint: UIColor? = nil) -> Vehicle? {
+    static func suv(tint: UIColor? = nil, headlights: Bool = false) -> Vehicle? {
         guard let model = ModelAsset.named("suv") else { return nil }
-        return Vehicle(model: model, paintColor: .white, metallic: 0, wheelParts: [], headlightSpots: []) { d in
+        let spots: [V3] = headlights ? [V3(0.62, 0.78, 2.0), V3(-0.62, 0.78, 2.0)] : []
+        let v = Vehicle(model: model, paintColor: .white, metallic: 0, wheelParts: [], headlightSpots: spots) { d in
             let m = ModelAsset.defaultMaterial(d)
             m.roughness.contents = 0.42
             m.clearCoat.contents = 0.4
             if let tint { m.multiply.contents = tint }
             return m
         }
+        if headlights {
+            // Видимые фары: светящиеся диски на передке.
+            let glass = Materials.glow(UIColor(red: 1, green: 0.95, blue: 0.85, alpha: 1), intensity: 2.5, doubleSided: false)
+            for x: Float in [0.62, -0.62] {
+                let lamp = SCNNode(SCNPlane(width: 0.26, height: 0.14), glass)
+                lamp.simdPosition = V3(x, 0.8, 1.975)
+                v.node.addChildNode(lamp)
+            }
+        }
+        return v
+    }
+
+    /// Машина Эдварда — синий пикап; если модели нет, серебристый седан.
+    static func edwardsCar() -> Vehicle {
+        suv(headlights: true) ?? sedan(color: UIColor(hex: 0xB9BEC4), metallic: 0.85)
     }
 
     /// Фургон Тайлера — высокий, с длинной полосой окон.
@@ -365,8 +381,16 @@ final class Vehicle {
         float dentAmount;
         #pragma body
         float3 dp = _geometry.position.xyz - float3(-0.98, 1.15, 0.0);
-        float dd = dot(dp * float3(0.6, 1.0, 1.0), dp * float3(0.6, 1.0, 1.0));
-        _geometry.position.x += dentAmount * 0.2 * exp(-dd / 0.09);
+        float3 sp = dp * float3(0.6, 1.0, 0.8);
+        float dd = dot(sp, sp);
+        // Глубокая вмятина от ладони и мелкая рябь смятого металла вокруг.
+        float h = dentAmount * (0.3 * exp(-dd / 0.16) + 0.025 * sin(sqrt(dd) * 40.0) * exp(-dd / 0.3));
+        _geometry.position.x += h;
+        // Нормаль наклоняем по склону вмятины — тогда она читается светом и тенью.
+        float slope = -2.0 / 0.16 * dentAmount * 0.3 * exp(-dd / 0.16);
+        _geometry.normal.y += slope * dp.y;
+        _geometry.normal.z += slope * dp.z * 0.64;
+        _geometry.normal = normalize(_geometry.normal);
         """]
         v.paint.setValue(NSNumber(value: 0), forKey: "dentAmount")
         return v

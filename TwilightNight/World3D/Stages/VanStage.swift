@@ -9,7 +9,7 @@ final class VanStage: Stage3D {
     private let edward = Humanoid(Cast.edward)
     private let van = Vehicle.van()
     private let truck = Vehicle.pickup()
-    private let volvo = Vehicle.sedan(color: UIColor(hex: 0xB9BEC4), metallic: 0.85)
+    private let volvo = Vehicle.edwardsCar()
 
     private let zone = SCNNode()
     private let zoneEdges = SCNNode()

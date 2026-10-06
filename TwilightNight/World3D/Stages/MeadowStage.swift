@@ -91,10 +91,26 @@ final class MeadowStage: Stage3D {
         forestFloor.simdPosition = V3(0, 0.005, 0)
         root.addChildNode(forestFloor)
 
-        root.addChildNode(Nature.grassField(radius: 21, count: 52_000, seed: 3, height: 0.25...0.62))
+        // Там, где Белла и Эдвард лежат в финале, трава примята — иначе высокая трава их скрывает.
+        func flattened(_ p: V3) -> Bool { p.x * p.x * 0.18 + p.z * p.z < 2.2 }
+        root.addChildNode(Nature.grassField(radius: 21, count: 52_000, seed: 3, height: 0.25...0.62,
+                                            avoid: flattened))
+        root.addChildNode(Nature.grassField(radius: 4.2, count: 2_400, seed: 13, height: 0.03...0.09,
+                                            avoid: { p in !flattened(p) }))
         root.addChildNode(Nature.flowers(radius: 20, count: 2600, seed: 4))
         root.addChildNode(Nature.forestRing(inner: 23.5, outer: 80, count: 640, seed: 21, heights: 16...30,
                                             broadleafShare: 0.35, corridor: (angle: Float.pi, width: 2.6)))
+        // Деревья из моделей по кромке луга.
+        var edge: [V3] = []
+        for k in 0..<16 {
+            let a = Float(k) / 16 * 2 * Float.pi + 0.2
+            let r: Float = 23.5 + Float(k % 3) * 1.6
+            edge.append(V3(sin(a) * r, 0, cos(a) * r))
+        }
+        if let grove = ModelAsset.grove(parts: [("tree_lowpoly", "a"), ("tree_lowpoly", "b"), ("tree_pack", "t3")],
+                                        spots: edge.filter { abs($0.x) > 3 || $0.z > 0 }, scale: 2.4...3.4, seed: 33) {
+            root.addChildNode(grove)
+        }
         // Кто-то следит из-за деревьев.
         if let wolf = ModelAsset.named("werewolf")?.grounded("wolf") {
             let spot = V3(18, 0, -16.5)

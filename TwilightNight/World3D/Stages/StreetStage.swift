@@ -7,7 +7,7 @@ final class StreetStage: RunnerStageBase {
 
     private let bella = Humanoid(Cast.bella)
     private let edward = Humanoid(Cast.edward)
-    private let volvo = Vehicle.sedan(color: UIColor(hex: 0xB9BEC4), metallic: 0.85)
+    private let volvo = Vehicle.edwardsCar()
     private var followers: [Humanoid] = []
     private var thugs: [ObjectIdentifier: Humanoid] = [:]
     private var key = SCNNode()

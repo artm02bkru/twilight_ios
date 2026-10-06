@@ -197,7 +197,7 @@ struct RunnerScene {
 
     private var finishLine: String {
         switch kind {
-        case .street: return "ФАРЫ «ВОЛЬВО»!"
+        case .street: return "ФАРЫ ЭДВАРДА!"
         case .forest: return "ДОБРАЛИСЬ"
         case .chase:  return "ОТОРВАЛИСЬ"
         }

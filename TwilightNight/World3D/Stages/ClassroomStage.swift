@@ -31,7 +31,7 @@ final class ClassroomStage: Stage3D {
             zenith: SIMD3(0.5, 0.54, 0.58), horizon: SIMD3(0.66, 0.68, 0.7), ground: SIMD3(0.3, 0.3, 0.3),
             cloudCover: 1, cloudLight: SIMD3(0.75, 0.77, 0.8), cloudDark: SIMD3(0.5, 0.52, 0.56),
             sunAzimuth: 1, sunElevation: 0.5, sunColor: SIMD3(0.9, 0.92, 0.95), sunGlow: 0.2,
-            sunDisc: false, seed: 81), lighting: 0.7)
+            sunDisc: false, seed: 81), lighting: 0.32)
         scene.background.contents = UIColor(white: 0.1, alpha: 1)
 
         buildRoom(root)
@@ -41,7 +41,7 @@ final class ClassroomStage: Stage3D {
             h.node.setCastsShadow(true)
         }
 
-        cameraSettings.exposureOffset = 0.2
+        cameraSettings.exposureOffset = -0.4
         cameraSettings.saturation = 0.88
         cameraSettings.contrast = 0.14
         placeCamera(eye: V3(-1.7, 1.5, 2.4), target: microscopeSpot, fov: 52)
@@ -72,7 +72,7 @@ final class ClassroomStage: Stage3D {
         root.addChildNode(view)
 
         // Холодный дневной свет сквозь окна.
-        let daylight = Stage3D.spotLight(color: UIColor(red: 0.82, green: 0.88, blue: 1, alpha: 1), intensity: 7000,
+        let daylight = Stage3D.spotLight(color: UIColor(red: 0.82, green: 0.88, blue: 1, alpha: 1), intensity: 2400,
                                          angle: 80, range: 30, shadows: true)
         daylight.simdPosition = V3(-10, 3.4, 1.0)
         daylight.simdLook(at: V3(0, 0.3, 1.0))
@@ -81,10 +81,10 @@ final class ClassroomStage: Stage3D {
         // Лампы дневного света под потолком.
         for (i, z) in [Float(-1.6), 2.6].enumerated() {
             let l = addOmni(at: V3(0, 2.4, z), color: UIColor(red: 0.92, green: 0.95, blue: 1, alpha: 1),
-                            intensity: 650, range: 9)
+                            intensity: 360, range: 9)
             if i == 1 { flicker = l }
         }
-        addAmbient(color: UIColor(red: 0.6, green: 0.62, blue: 0.68, alpha: 1), intensity: 120)
+        addAmbient(color: UIColor(red: 0.6, green: 0.62, blue: 0.68, alpha: 1), intensity: 55)
 
         // На доске — тема урока, синим маркером.
         let marker = Materials.pbr(UIColor(hex: 0x1B2A6B), roughness: 0.5)
@@ -136,7 +136,7 @@ final class ClassroomStage: Stage3D {
         case "EMMISION":
             let m = Materials.pbr(UIColor(white: 1, alpha: 1), roughness: 0.3)
             m.emission.contents = UIColor(red: 0.92, green: 0.96, blue: 1, alpha: 1)
-            m.emission.intensity = 1.6
+            m.emission.intensity = 0.9
             return m
         case "WHITE.001":
             let m = Materials.pbr(UIColor(white: 0.95, alpha: 1), roughness: 0.12)
@@ -182,7 +182,7 @@ final class ClassroomStage: Stage3D {
 
     override func updateAmbient(dt: Float) {
         for h in everyone { h.update(dt: dt, time: time) }
-        let f: CGFloat = sin(time * 17) + sin(time * 23) > 1.7 ? 120 : 650
+        let f: CGFloat = sin(time * 17) + sin(time * 23) > 1.7 ? 90 : 360
         flicker.light?.intensity = f
     }
 
@@ -238,7 +238,8 @@ final class ClassroomStage: Stage3D {
 
     override func updateIdle(dt: Float) {
         let a = sin(time * 0.12) * 0.4
-        placeCamera(eye: V3(3.1, 2.0, 4.8) + V3(a, 0, 0), target: V3(-2.4, 0.9, 0.0), fov: 54)
+        // Ровный кадр через класс на парту Беллы и Эдварда, без наклона.
+        placeCamera(eye: V3(-2.6 + a * 0.3, 1.6, 2.25), target: V3(-2.9 + a * 0.3, 0.95, 0.25), fov: 50)
     }
 
     // MARK: - Кат-сцены

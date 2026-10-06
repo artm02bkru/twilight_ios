@@ -65,6 +65,7 @@ struct RootView: View {
                         engine.update(dt: delta)
                     }
                     director.tick(engine, dt: delta)
+                    music.select(musicKey)
                 }
                 clock.start()
                 if ShotTour.isRequested && tour == nil {
@@ -90,6 +91,21 @@ struct RootView: View {
             @unknown default:
                 break
             }
+        }
+    }
+
+    /// Какая музыка сейчас нужна: меню, пролог, финал или глава.
+    private var musicKey: String {
+        switch engine.phase {
+        case .menu: return "menu"
+        case .finale: return "finale"
+        case .cutscene:
+            switch engine.cutscene?.script.id {
+            case .prologue?: return "prologue"
+            case .finale?: return "finale"
+            default: return "\(engine.chapter)"
+            }
+        default: return "\(engine.chapter)"
         }
     }
 

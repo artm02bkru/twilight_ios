@@ -5,7 +5,7 @@ import simd
 /// Глава 18. Ночное шоссе на юг: машина Элис уходит от фар Джеймса сквозь дождь.
 final class ChaseStage: RunnerStageBase {
 
-    private let car = Vehicle.sedan(color: UIColor(hex: 0x0C0D10), metallic: 0.7)
+    private let car = Vehicle.edwardsCar()
     private let hunter = Vehicle.sedan(color: UIColor(hex: 0x1A1612), metallic: 0.5)
     private var key = SCNNode()
     private let rainNode = SCNNode()
@@ -172,7 +172,7 @@ final class ChaseStage: RunnerStageBase {
             let hazard = Materials.glow(UIColor(red: 1, green: 0.6, blue: 0.1, alpha: 1), intensity: 3, doubleSided: false)
             hazards.append(hazard)
             for x: Float in [-0.7, 0.7] {
-                for z: Float in [-2.25, 2.25] {
+                for z: Float in [-1.95, 1.95] {
                     let lamp = SCNNode(SCNSphere(radius: 0.07), hazard)
                     lamp.simdPosition = V3(x, 0.8, z)
                     stalled.node.addChildNode(lamp)
@@ -182,9 +182,9 @@ final class ChaseStage: RunnerStageBase {
         case 1:
             // Поваленное дерево.
             let n = SCNNode()
-            let log = SCNNode(SCNCylinder(radius: 0.38, height: 5.5), Materials.bark())
+            // Не шире своей полосы (2.4 м), иначе бревно «перекрывает» соседние полосы, хотя не бьёт.
+            let log = SCNNode(SCNCylinder(radius: 0.38, height: 2.1), Materials.bark())
             log.eulerAngles.z = Float.pi / 2
-            log.eulerAngles.y = 0.25
             log.simdPosition = V3(0, 0.38, 0)
             n.addChildNode(log)
             return n
@@ -192,10 +192,10 @@ final class ChaseStage: RunnerStageBase {
             // Дорожный барьер с мигалкой.
             let n = SCNNode()
             let stripes = Materials.pbr(UIColor(red: 0.9, green: 0.3, blue: 0.1, alpha: 1), roughness: 0.4)
-            let bar = SCNNode(SCNBox(width: 2.6, height: 0.35, length: 0.12, chamferRadius: 0.02), stripes)
+            let bar = SCNNode(SCNBox(width: 2.0, height: 0.35, length: 0.12, chamferRadius: 0.02), stripes)
             bar.simdPosition = V3(0, 0.9, 0)
             n.addChildNode(bar)
-            for x: Float in [-1.1, 1.1] {
+            for x: Float in [-0.85, 0.85] {
                 let leg = SCNNode(SCNBox(width: 0.1, height: 1, length: 0.5, chamferRadius: 0.01),
                                   Materials.pbr(UIColor(white: 0.8, alpha: 1), roughness: 0.5))
                 leg.simdPosition = V3(x, 0.5, 0)
@@ -254,12 +254,96 @@ final class ChaseStage: RunnerStageBase {
         placeCar(x: playerX, z: playerZ, steer: steer, speed: Float(s.speed), dt: dt)
         if s.stumble > 0.9 { shake = 0.6 }
         layoutObstacles(s)
+        updateRacingLine(s)
         runnerCamera(dt: dt, height: 3.4, back: 8)
+    }
+
+    // MARK: - Гоночная линия
+
+    private var chevrons: [SCNNode] = []
+    private let chevronCount = 26
+    private let chevronStep: Float = 2.6
+
+    private func buildRacingLine() {
+        let image = UIGraphicsImageRenderer(size: CGSize(width: 128, height: 128)).image { ctx in
+            let c = ctx.cgContext
+            c.setStrokeColor(UIColor.white.cgColor)
+            c.setLineWidth(22)
+            c.setLineCap(.round)
+            c.setLineJoin(.round)
+            c.move(to: CGPoint(x: 18, y: 100))
+            c.addLine(to: CGPoint(x: 64, y: 40))
+            c.addLine(to: CGPoint(x: 110, y: 100))
+            c.strokePath()
+        }
+        for _ in 0..<chevronCount {
+            let m = Materials.glowImage(image, color: UIColor(red: 0.35, green: 1, blue: 0.75, alpha: 1), intensity: 1.6)
+            let plane = SCNNode(SCNPlane(width: 0.9, height: 0.9), m)
+            plane.eulerAngles.x = -Float.pi / 2
+            let n = SCNNode()
+            n.addChildNode(plane)
+            n.castsShadow = false
+            n.isHidden = true
+            scene.rootNode.addChildNode(n)
+            chevrons.append(n)
+        }
+    }
+
+    /// Светящаяся линия, как в гонках: ведёт к свободной полосе каждого следующего ряда препятствий.
+    private func updateRacingLine(_ s: RunnerScene) {
+        if chevrons.isEmpty { buildRacingLine() }
+        // Ряды впереди: дистанция → занятые полосы.
+        var rows: [Double: Set<Int>] = [:]
+        for o in s.obstacles where !o.pickup && !o.consumed {
+            let rel = o.at - s.distance
+            guard rel > 1, rel < 75 else { continue }
+            rows[o.at, default: []].insert(o.lane)
+        }
+        // Опорные точки: (дистанция, x). Перестраиваемся заранее и держим полосу до ряда.
+        var keys: [(Double, Float)] = [(s.distance, playerX)]
+        var lane = s.lane
+        for at in rows.keys.sorted() {
+            let blocked = rows[at] ?? []
+            let free = (0..<3).filter { !blocked.contains($0) }
+            guard let best = free.min(by: { abs($0 - lane) < abs($1 - lane) }) else { continue }
+            lane = best
+            let x = Float(RunnerScene.laneX(lane)) * xScale
+            keys.append((max(keys.last!.0 + 1, at - 9), x))
+            keys.append((at + 3, x))
+        }
+        func lineX(_ d: Double) -> Float {
+            guard let last = keys.last else { return playerX }
+            if d >= last.0 { return last.1 }
+            for i in 1..<keys.count where d < keys[i].0 {
+                let a = keys[i - 1], b = keys[i]
+                let t = Float((d - a.0) / max(0.001, b.0 - a.0))
+                let k = t * t * (3 - 2 * t)
+                return a.1 + (b.1 - a.1) * k
+            }
+            return last.1
+        }
+        let start = s.distance + 4 - fmod(s.distance, Double(chevronStep))
+        for (i, n) in chevrons.enumerated() {
+            let d = start + Double(i) * Double(chevronStep)
+            let x = lineX(d)
+            let ahead = lineX(d + 1.5)
+            n.isHidden = false
+            n.simdPosition = V3(x, 0.03, -Float(d))
+            n.simdEulerAngles.y = atan2(x - ahead, 1.5)
+            // Ближние стрелки ярче, дальние гаснут.
+            let fade = 1 - Float(i) / Float(chevronCount)
+            n.opacity = CGFloat(0.25 + 0.75 * fade)
+        }
+    }
+
+    private func hideRacingLine() {
+        for n in chevrons { n.isHidden = true }
     }
 
     override func enterIdle() {
         enterGameplay()
         hideObstacles()
+        hideRacingLine()
         cameraSettings.motionBlurIntensity = 0
     }
 
@@ -274,6 +358,7 @@ final class ChaseStage: RunnerStageBase {
 
     override func beginShot(_ cue: Cue) {
         hideObstacles()
+        hideRacingLine()
         cameraSettings.motionBlurIntensity = 0
         switch cue {
         case .chaseDepart:

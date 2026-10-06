@@ -1,7 +1,9 @@
 import AVFoundation
 
-/// Процедурные звуки: дождь, ветер, гром, визг шин, удары, сердцебиение, сверчки.
-/// Всё синтезируется при запуске — аудиофайлы не нужны. Играет поверх музыки.
+/// Звуки игры. Если в папке Audio лежит файл с нужным именем — играет он:
+/// фоны `amb_<имя>`, эффекты `sfx_<имя>`, реплики кат-сцен `vo_<кадр>` (m4a, mp3, wav, aac, caf).
+/// Фоновые петли без файла молчат (синтезированный шум убран); эффекты без файла —
+/// синтезированные. Список имён — Audio/README.txt.
 final class SoundFX {
 
     static let shared = SoundFX()
@@ -22,6 +24,24 @@ final class SoundFX {
     private var effectBuffers: [Effect: AVAudioPCMBuffer] = [:]
     private var running = false
     private let queue = DispatchQueue(label: "twilight.sfx")
+    /// Фоны и эффекты из файлов.
+    private var ambiencePlayers: [Ambience: AVAudioPlayer] = [:]
+    private var effectFiles: [Effect: Data] = [:]
+    private var activeShots: [AVAudioPlayer] = []
+    private var voicePlayer: AVAudioPlayer?
+    private var lastVoice = ""
+
+    /// Файл из папки Audio по имени без расширения.
+    static func audioURL(_ name: String) -> URL? {
+        let bundle = Bundle.main
+        for ext in ["m4a", "mp3", "wav", "aac", "caf"] {
+            if let url = bundle.url(forResource: name, withExtension: ext, subdirectory: "Audio")
+                ?? bundle.url(forResource: name, withExtension: ext) {
+                return url
+            }
+        }
+        return nil
+    }
 
     private init() {
         // Звуки синтезируются в фоне — запуск игры не задерживается.
@@ -32,7 +52,15 @@ final class SoundFX {
 
     func play(_ effect: Effect, volume: Float = 1, delay: TimeInterval = 0) {
         queue.asyncAfter(deadline: .now() + delay) { [weak self] in
-            guard let self, self.running, let buffer = self.effectBuffers[effect] else { return }
+            guard let self else { return }
+            if let data = self.effectFiles[effect], let p = try? AVAudioPlayer(data: data) {
+                self.activeShots.removeAll { !$0.isPlaying }
+                p.volume = volume
+                p.play()
+                self.activeShots.append(p)
+                return
+            }
+            guard self.running, let buffer = self.effectBuffers[effect] else { return }
             let player = self.oneShots[self.nextShot]
             self.nextShot = (self.nextShot + 1) % self.oneShots.count
             player.stop()
@@ -45,7 +73,9 @@ final class SoundFX {
     /// Громкость фонового слоя (0 — тишина). Меняется плавно на стороне вызывающего.
     func setAmbience(_ ambience: Ambience, volume: Float) {
         queue.async { [weak self] in
-            self?.loops[ambience]?.volume = volume
+            guard let p = self?.ambiencePlayers[ambience] else { return }
+            p.setVolume(volume, fadeDuration: 0.6)
+            if volume > 0 && !p.isPlaying { p.play() }
         }
     }
 
@@ -53,9 +83,42 @@ final class SoundFX {
     func ambience(_ levels: [Ambience: Float]) {
         queue.async { [weak self] in
             guard let self else { return }
-            for (kind, player) in self.loops {
-                player.volume = levels[kind] ?? 0
+            for (kind, p) in self.ambiencePlayers {
+                let v = levels[kind] ?? 0
+                p.setVolume(v, fadeDuration: 1.2)
+                if v > 0 && !p.isPlaying { p.play() }
             }
+        }
+    }
+
+    /// Реплика кадра кат-сцены: файл `vo_<name>`; музыка на время приглушается.
+    func voice(_ name: String) {
+        queue.async { [weak self] in
+            guard let self, name != self.lastVoice else { return }
+            self.lastVoice = name
+            self.voicePlayer?.stop()
+            self.voicePlayer = nil
+            guard let url = Self.audioURL("vo_" + name), let p = try? AVAudioPlayer(contentsOf: url) else { return }
+            p.volume = 1
+            p.play()
+            self.voicePlayer = p
+            let length = p.duration
+            DispatchQueue.main.async {
+                SoundtrackPlayer.shared.duck(to: 0.18, over: 0.3)
+                DispatchQueue.main.asyncAfter(deadline: .now() + length + 0.2) {
+                    SoundtrackPlayer.shared.unduck()
+                }
+            }
+        }
+    }
+
+    func stopVoice() {
+        queue.async { [weak self] in
+            guard let self, self.voicePlayer != nil || !self.lastVoice.isEmpty else { return }
+            self.voicePlayer?.stop()
+            self.voicePlayer = nil
+            self.lastVoice = ""
+            DispatchQueue.main.async { SoundtrackPlayer.shared.unduck() }
         }
     }
 
@@ -64,7 +127,7 @@ final class SoundFX {
         queue.async { [weak self] in
             guard let self, !self.engine.isRunning, !self.oneShots.isEmpty else { return }
             try? self.engine.start()
-            for player in self.loops.values { player.play() }
+            for p in self.ambiencePlayers.values where p.volume > 0 { p.play() }
         }
     }
 
@@ -79,14 +142,18 @@ final class SoundFX {
             engine.connect(p, to: engine.mainMixerNode, format: format)
             oneShots.append(p)
         }
-        var loopBuffers: [Ambience: AVAudioPCMBuffer] = [:]
+        // Фоны — только из файлов: синтезированный шум шипел.
         for kind in Ambience.allCases {
-            let p = AVAudioPlayerNode()
-            engine.attach(p)
-            engine.connect(p, to: engine.mainMixerNode, format: format)
+            guard let url = Self.audioURL("amb_\(kind)"), let p = try? AVAudioPlayer(contentsOf: url) else { continue }
+            p.numberOfLoops = -1
             p.volume = 0
-            loops[kind] = p
-            loopBuffers[kind] = makeLoop(kind)
+            p.prepareToPlay()
+            ambiencePlayers[kind] = p
+        }
+        for effect in Effect.allCases {
+            if let url = Self.audioURL("sfx_\(effect)"), let data = try? Data(contentsOf: url) {
+                effectFiles[effect] = data
+            }
         }
         engine.mainMixerNode.outputVolume = 0.9
         do {
@@ -94,12 +161,6 @@ final class SoundFX {
         } catch {
             NSLog("SoundFX: аудиодвижок не запустился: \(error)")
             return
-        }
-        for (kind, p) in loops {
-            if let buffer = loopBuffers[kind] {
-                p.scheduleBuffer(buffer, at: nil, options: .loops, completionHandler: nil)
-                p.play()
-            }
         }
         running = true
     }
