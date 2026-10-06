@@ -97,8 +97,18 @@ final class WorldDirector: ObservableObject {
     var currentCamera: SCNNode? { current.flatMap { stages[$0]?.camera } }
 
     /// В раннерах важнее плавность: рендер в 75% разрешения и сглаживание 2x.
+    /// Фототур на CI: программный рендер симулятора не тянет тяжёлые сцены — снимаем попроще.
+    static var lowQuality = false
+
     private func applyQuality(for stage: Stage3D) {
         let native = view.window?.screen.scale ?? 2
+        if Self.lowQuality {
+            view.contentScaleFactor = 1
+            view.antialiasingMode = .none
+            stage.cameraSettings.screenSpaceAmbientOcclusionIntensity = 0
+            stage.cameraSettings.wantsDepthOfField = false
+            return
+        }
         if stage is RunnerStageBase {
             view.contentScaleFactor = native * 0.75
             view.antialiasingMode = .multisampling2X

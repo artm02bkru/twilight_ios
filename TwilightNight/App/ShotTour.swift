@@ -27,6 +27,7 @@ final class ShotTour {
         try? FileManager.default.removeItem(at: folder)
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         items = Self.plan()
+        WorldDirector.lowQuality = true
     }
 
     private static func plan() -> [Item] {
@@ -77,7 +78,13 @@ final class ShotTour {
                     waited += 0.2
                 }
                 try? await Task.sleep(nanoseconds: UInt64((1.2 + item.settle) * 1_000_000_000))
-                save(director.view.snapshot(), name: item.name)
+                // Программный рендер иногда отдаёт пустой кадр — пробуем ещё пару раз.
+                var shot = director.view.snapshot()
+                for _ in 0..<3 where Self.isBlack(shot) {
+                    try? await Task.sleep(nanoseconds: 4_000_000_000)
+                    shot = director.view.snapshot()
+                }
+                save(shot, name: item.name)
                 let cam = director.currentCamera?.simdWorldPosition ?? .zero
                 let line = "\(item.name): want=\(engine.stageID) shown=\(director.currentStage.map { "\($0)" } ?? "nil") waited=\(Int(waited))s cam=(\(cam.x), \(cam.y), \(cam.z)) phase=\(engine.phase)\n"
                 if let h = try? FileHandle(forWritingTo: folder.appendingPathComponent("info.txt")) {
@@ -95,6 +102,19 @@ final class ShotTour {
             }
             try? "done".write(to: folder.appendingPathComponent("done.txt"), atomically: true, encoding: .utf8)
         }
+    }
+
+    private static func isBlack(_ image: UIImage) -> Bool {
+        guard let cg = image.cgImage else { return true }
+        let w = 32, h = 32
+        var px = [UInt8](repeating: 0, count: w * h * 4)
+        guard let ctx = CGContext(data: &px, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w * 4,
+                                  space: CGColorSpaceCreateDeviceRGB(),
+                                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return false }
+        ctx.draw(cg, in: CGRect(x: 0, y: 0, width: w, height: h))
+        var sum = 0
+        for i in stride(from: 0, to: px.count, by: 4) { sum += Int(px[i]) + Int(px[i + 1]) + Int(px[i + 2]) }
+        return sum / (w * h * 3) < 2
     }
 
     private func save(_ image: UIImage, name: String) {

@@ -413,12 +413,13 @@ struct Pose {
         p.hipR = V3(-1.25, 0, -0.45)
         p.kneeL = 1.6
         p.kneeR = 1.6
-        p.spine = V3(0.25, 0, 0)
-        p.head = V3(0.2, 0.35, 0)
-        p.shoulderL = V3(-1.5, 0, -0.25)
-        p.shoulderR = V3(-1.5, 0, 0.25)
-        p.elbowL = -1.3
-        p.elbowR = -1.3
+        p.spine = V3(0.35, 0, 0)
+        p.head = V3(0.15, 0.35, 0)
+        // Руки вперёд и внутрь — обнимает его за шею, а не тянет вверх.
+        p.shoulderL = V3(-1.15, 0, -0.62)
+        p.shoulderR = V3(-1.15, 0, 0.62)
+        p.elbowL = -0.55
+        p.elbowR = -0.55
         return p
     }()
 

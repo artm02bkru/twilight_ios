@@ -186,7 +186,7 @@ final class ForestRunStage: RunnerStageBase {
             edward.target = Pose.carryRun(runPhase)
             edward.rate = 22
         }
-        bella.place(V3(0, 0.56, -0.27), yaw: 0)
+        bella.place(V3(0, 0.2, -0.32), yaw: 0)
         bella.target = .piggyback
         bella.rate = 12
     }
@@ -277,7 +277,7 @@ final class ForestRunStage: RunnerStageBase {
                 edward.lookAt = bella.head.simdWorldPosition
             } else {
                 attachBella()
-                bella.place(V3(0, 0.56, -0.27), yaw: 0)
+                bella.place(V3(0, 0.2, -0.32), yaw: 0)
                 bella.snap(.piggyback)
                 edward.snap(.stand)
             }

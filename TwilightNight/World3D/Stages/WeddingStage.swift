@@ -79,9 +79,9 @@ final class WeddingStage: Stage3D {
         dressBella(bellaSlim, index: 0)
         dressBella(bellaPrincess, index: 1)
 
-        cameraSettings.bloomIntensity = 1.0
-        cameraSettings.bloomThreshold = 0.65
-        cameraSettings.exposureOffset = 0.35
+        cameraSettings.bloomIntensity = 0.45
+        cameraSettings.bloomThreshold = 0.9
+        cameraSettings.exposureOffset = -0.15
         placeCamera(eye: V3(0, 1.8, 6), target: V3(0, 1.4, 0), fov: 46)
         applyPicks()
     }

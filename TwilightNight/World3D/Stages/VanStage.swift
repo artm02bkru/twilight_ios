@@ -439,7 +439,8 @@ final class VanStage: Stage3D {
                   look: (bella.head.simdWorldPosition, vanPos + V3(0, 1.3, 0)), fov: (44, 34))
             cameraSettings.motionBlurIntensity = 0.6
         case .lotDent:
-            dolly(p, eye: (V3(-5.4, 1.3, 2.4), V3(-4.6, 1.15, 1.3)), look: (V3(-3.4, 1.1, 0), V3(-3.4, 1.15, 0)), fov: (40, 30))
+            // Сбоку от Эдварда, чтобы он не закрывал борт: вмятина справа от его ладони.
+            dolly(p, eye: (V3(-2.5, 1.55, 2.7), V3(-2.9, 1.4, 1.9)), look: (V3(-3.4, 1.1, 0), V3(-3.4, 1.15, 0)), fov: (42, 34))
         case .lotFacesBella:
             let target = bella.head.simdWorldPosition
             dolly(p, eye: (V3(-4.7, 1.0, 1.6), V3(-4.9, 0.95, 1.45)), look: (target, target), fov: (30, 26))
