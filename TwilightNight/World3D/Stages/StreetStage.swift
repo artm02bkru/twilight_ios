@@ -187,9 +187,10 @@ final class StreetStage: RunnerStageBase {
         seg.addChildNode(vent)
 
         // Машины у обочины.
-        for _ in 0..<2 {
-            let car = Vehicle.sedan(color: [UIColor(hex: 0x3A2E2A), UIColor(hex: 0x24303A), UIColor(hex: 0x5A5A52)][Int(rng.unit() * 3) % 3],
-                                    metallic: 0.4)
+        for k in 0..<2 {
+            let car = (k == 0 ? Vehicle.suv(tint: UIColor(white: 0.55, alpha: 1)) : nil)
+                ?? Vehicle.sedan(color: [UIColor(hex: 0x3A2E2A), UIColor(hex: 0x24303A), UIColor(hex: 0x5A5A52)][Int(rng.unit() * 3) % 3],
+                                 metallic: 0.4)
             car.node.simdPosition = V3((rng.unit() > 0.5 ? 1 : -1) * 5.6, 0, -rng.range(8, L - 8))
             seg.addChildNode(car.node)
         }

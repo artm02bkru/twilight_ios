@@ -51,8 +51,13 @@ final class WeddingStage: Stage3D {
                                             avoid: { p in abs(p.x) < 1.0 && p.z > -1 && p.z < 12 }))
         root.addChildNode(Nature.flowers(radius: 24, count: 700, seed: 42,
                                          palette: [UIColor(hex: 0xF5F2F8), UIColor(hex: 0xE9C8D8), UIColor(hex: 0xF2E3A8)]))
+        let houseModel = ModelAsset.named("cullen_house")
         root.addChildNode(Nature.forestRing(center: V3(0, 0, -6), inner: 30, outer: 85, count: 520, seed: 43,
-                                            heights: 18...32, broadleafShare: 0.25))
+                                            heights: 18...32, broadleafShare: 0.25,
+                                            clearing: houseModel == nil ? nil : { p in
+                                                // Поляна под дом Калленов за алтарём.
+                                                p.x > -30 && p.x < 36 && p.z > -62 && p.z < -16
+                                            }))
         buildHouse(root)
         buildChairs(root)
         buildArches(root)
@@ -82,6 +87,25 @@ final class WeddingStage: Stage3D {
     // MARK: - Сборка
 
     private func buildHouse(_ root: SCNNode) {
+        if let model = ModelAsset.named("cullen_house") {
+            // Модель дома Калленов: бетон, лиственница, стекло; в окнах — тёплый свет.
+            let house = model.wholeNode { d in
+                guard d.name.contains("Glass") else { return nil }
+                let glass = Materials.pbr(UIColor(white: 0.06, alpha: 1), roughness: 0.04, metalness: 0.4)
+                glass.emission.contents = UIColor(red: 1, green: 0.78, blue: 0.5, alpha: 1)
+                glass.emission.intensity = 0.55
+                glass.transparency = 0.85
+                glass.transparencyMode = .dualLayer
+                return glass
+            }
+            let base = V3(4, 0, -36)
+            house.simdPosition = base
+            house.childNodes.forEach { $0.castsShadow = true }
+            root.addChildNode(house)
+            addOmni(at: base + V3(0, 4, 14), color: UIColor(red: 1, green: 0.75, blue: 0.45, alpha: 1), intensity: 700, range: 22)
+            buildGardenTrees(root)
+            return
+        }
         // Стеклянный дом Калленов среди деревьев, в окнах — тёплый свет.
         let wood = Materials.wood(tile: 1.5, roughness: 0.6)
         let glass = Materials.pbr(UIColor(white: 0.05, alpha: 1), roughness: 0.04, metalness: 0.4)
@@ -105,6 +129,35 @@ final class WeddingStage: Stage3D {
             }
         }
         addOmni(at: base + V3(0, 2, 6), color: UIColor(red: 1, green: 0.75, blue: 0.45, alpha: 1), intensity: 600, range: 18)
+    }
+
+    /// Садовые деревья вдоль поляны: подстриженные кроны и лиственные деревья из моделей.
+    private func buildGardenTrees(_ root: SCNNode) {
+        var rng = SeededRandom(seed: 71)
+        if let pack = ModelAsset.named("tree_pack") {
+            // Фигурные кроны по сторонам прохода.
+            let spots: [(V3, String)] = [(V3(-6.5, 0, 3), "t1"), (V3(6.5, 0, 3), "t2"), (V3(-7, 0, 9), "t5"),
+                                         (V3(7, 0, 9), "t1"), (V3(-9, 0, -4), "t2"), (V3(9.5, 0, -4), "t5")]
+            for (p, name) in spots {
+                guard let t = pack.grounded(name) else { continue }
+                t.simdPosition = p
+                t.simdEulerAngles.y = rng.range(0, 6.28)
+                t.simdScale = V3(repeating: rng.range(1.1, 1.4))
+                t.setCastsShadow(true)
+                root.addChildNode(t)
+            }
+        }
+        if let trees = ModelAsset.named("tree_lowpoly") {
+            for i in 0..<10 {
+                let a = Float(i) / 10 * Float.pi * 1.4 - Float.pi * 0.2
+                let r = rng.range(15, 21)
+                guard let t = trees.grounded(i % 2 == 0 ? "a" : "b") else { continue }
+                t.simdPosition = V3(cos(a) * r, 0, sin(a) * r * 0.7 + 4)
+                t.simdEulerAngles.y = rng.range(0, 6.28)
+                t.simdScale = V3(repeating: rng.range(1.6, 2.2))
+                root.addChildNode(t)
+            }
+        }
     }
 
     private func chairNode() -> SCNNode {
@@ -252,7 +305,13 @@ final class WeddingStage: Stage3D {
         boughNode.geometry?.materials = [boughMat]
         a3.addChildNode(boughNode)
 
-        arches = [a0, a1, a2, a3]
+        // Вариант 0 — готовая арка из цветов и листьев, если модель есть.
+        var first = a0
+        if let model = ModelAsset.named("flower_arch") {
+            first = model.wholeNode()
+            first.setCastsShadow(true)
+        }
+        arches = [first, a1, a2, a3]
         for a in arches {
             a.simdPosition = altar + V3(0, 0, -0.6)
             root.addChildNode(a)

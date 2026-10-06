@@ -134,8 +134,11 @@ final class VanStage: Stage3D {
                                  UIColor(hex: 0x2F4636), UIColor(hex: 0x494F5A), UIColor(hex: 0x8E8A7E)]
         for (x, z) in [(-14.5, -8.0), (-11.6, -8.0), (-2.9, -8.0), (11.6, -8.0), (14.5, -8.0),
                        (-8.7, -15.0), (-2.9, -15.0), (2.9, -15.0), (8.7, -15.0), (17.4, -15.0)] {
-            let car = Vehicle.sedan(color: colors[Int(rng.unit() * Float(colors.count)) % colors.count],
-                                    metallic: CGFloat(rng.range(0.2, 0.7)))
+            let color = colors[Int(rng.unit() * Float(colors.count)) % colors.count]
+            let metal = CGFloat(rng.range(0.2, 0.7))
+            // Каждая третья — пикап из модели.
+            let car = (Int(x * 10 + z) % 3 == 0 ? Vehicle.suv(tint: UIColor(white: CGFloat(rng.range(0.7, 1)), alpha: 1)) : nil)
+                ?? Vehicle.sedan(color: color, metallic: metal)
             car.node.simdPosition = V3(Float(x), 0, Float(z))
             car.node.simdEulerAngles.y = rng.range(-0.04, 0.04) + (rng.unit() > 0.5 ? Float.pi : 0)
             root.addChildNode(car.node)

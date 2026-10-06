@@ -71,12 +71,26 @@ final class BaseballStage: Stage3D {
         }
 
         // Бита в правой руке Эдварда.
-        let bat = SCNCone(topRadius: 0.032, bottomRadius: 0.017, height: 0.84)
-        bat.radialSegmentCount = 20
-        let batNode = SCNNode(bat, Materials.pbr(UIColor(hex: 0xB88A55), roughness: 0.35))
-        batNode.geometry?.firstMaterial?.clearCoat.contents = 0.8
+        let batNode = SCNNode()
         batNode.simdPosition = V3(0, -0.08, 0.38)
-        batNode.eulerAngles.x = Float.pi / 2
+        if let model = ModelAsset.named("bat"), let mesh = model.node("bat", material: { d in
+            let m = ModelAsset.defaultMaterial(d)
+            m.roughness.contents = 0.35
+            m.clearCoat.contents = 0.8
+            return m
+        }) {
+            // Модель лежит наискосок: ось биты (ручка → бочка) разворачиваем вдоль кисти.
+            mesh.simdPosition = V3(0.0002, 0.0293, -0.0463)
+            batNode.simdOrientation = simd_quatf(from: simd_normalize(V3(0.0006, 0.4863, -0.8738)), to: V3(0, 0, 1))
+            batNode.addChildNode(mesh)
+        } else {
+            let bat = SCNCone(topRadius: 0.032, bottomRadius: 0.017, height: 0.84)
+            bat.radialSegmentCount = 20
+            let cone = SCNNode(bat, Materials.pbr(UIColor(hex: 0xB88A55), roughness: 0.35))
+            cone.geometry?.firstMaterial?.clearCoat.contents = 0.8
+            cone.eulerAngles.x = Float.pi / 2
+            batNode.addChildNode(cone)
+        }
         edward.handR.addChildNode(batNode)
         // Перчатка-ловушка у Эммета.
         let mitt = SCNNode(SCNSphere(radius: 0.09), Materials.pbr(UIColor(hex: 0x5A3A22), roughness: 0.6))

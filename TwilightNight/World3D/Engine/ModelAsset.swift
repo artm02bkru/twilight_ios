@@ -202,6 +202,17 @@ final class ModelAsset {
         return n
     }
 
+    /// Часть, поставленная на землю: центр основания — в начале координат возвращённого узла.
+    func grounded(_ partName: String, material: (Material) -> SCNMaterial? = { _ in nil }) -> SCNNode? {
+        guard let part = parts[partName], let inner = node(partName, material: material) else { return nil }
+        let lo = part.boundsMin, hi = part.boundsMax
+        inner.simdPosition = V3(-(lo.x + hi.x) / 2, -lo.y, -(lo.z + hi.z) / 2)
+        let n = SCNNode()
+        n.name = partName
+        n.addChildNode(inner)
+        return n
+    }
+
     /// Все части одним узлом (статичная модель).
     func wholeNode(material: (Material) -> SCNMaterial? = { _ in nil }) -> SCNNode {
         let root = SCNNode()

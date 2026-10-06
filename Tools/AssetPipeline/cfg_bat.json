@@ -1,0 +1,1 @@
+{"axis": [[1, 0, 0], [0, 0, 1], [0, -1, 0]], "outdir": "../../TwilightNight/Models", "blend": "../../Assets3D/Retro_Lowpoly_PSX_Baseball_Bat.usdz", "parts": [{"name": "bat", "rest": true, "pivotCenter": true}], "prefix": "bat"}

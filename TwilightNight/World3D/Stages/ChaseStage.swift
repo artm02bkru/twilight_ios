@@ -156,14 +156,18 @@ final class ChaseStage: RunnerStageBase {
 
     private var obstacleKind = 0
 
+    private var suvToggle = false
+
     /// На шоссе все препятствия перекрывают полосу; модели чередуются: машина, бревно, барьер.
     override func makeObstacle(_ variant: Int) -> SCNNode {
         obstacleKind = (obstacleKind + 1) % 3
         switch obstacleKind {
         case 0:
             // Заглохшая машина с аварийкой.
-            let stalled = Vehicle.sedan(color: [UIColor(hex: 0x6A2A22), UIColor(hex: 0x8A8A80), UIColor(hex: 0x2A3A4A)].randomElement()!,
-                                        metallic: 0.4)
+            suvToggle.toggle()
+            let stalled = (suvToggle ? Vehicle.suv(tint: UIColor(white: 0.8, alpha: 1)) : nil)
+                ?? Vehicle.sedan(color: [UIColor(hex: 0x6A2A22), UIColor(hex: 0x8A8A80), UIColor(hex: 0x2A3A4A)].randomElement()!,
+                                 metallic: 0.4)
             stalled.node.simdEulerAngles.y = Float.pi + Float.random(in: -0.15...0.15)
             let hazard = Materials.glow(UIColor(red: 1, green: 0.6, blue: 0.1, alpha: 1), intensity: 3, doubleSided: false)
             hazards.append(hazard)

@@ -95,6 +95,14 @@ final class MeadowStage: Stage3D {
         root.addChildNode(Nature.flowers(radius: 20, count: 2600, seed: 4))
         root.addChildNode(Nature.forestRing(inner: 23.5, outer: 80, count: 640, seed: 21, heights: 16...30,
                                             broadleafShare: 0.35, corridor: (angle: Float.pi, width: 2.6)))
+        // Кто-то следит из-за деревьев.
+        if let wolf = ModelAsset.named("werewolf")?.grounded("wolf") {
+            let spot = V3(18, 0, -16.5)
+            wolf.simdPosition = spot
+            wolf.simdEulerAngles.y = yawToward(from: spot, to: .zero)
+            wolf.setCastsShadow(true)
+            root.addChildNode(wolf)
+        }
         root.addChildNode(Nature.rocks(count: 18, seed: 8) { r in
             let a = r.x * 2 * Float.pi, d = 19 + r.y * 6
             return V3(sin(a) * d, 0, cos(a) * d)

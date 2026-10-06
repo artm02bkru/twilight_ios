@@ -309,6 +309,19 @@ final class Vehicle {
         return v
     }
 
+    /// Синий пикап из модели «Vehicle SUV» (одна сетка с текстурным атласом) — для парковок и трассы.
+    /// tint затемняет или осветляет атлас, чтобы машины не были одинаковыми.
+    static func suv(tint: UIColor? = nil) -> Vehicle? {
+        guard let model = ModelAsset.named("suv") else { return nil }
+        return Vehicle(model: model, paintColor: .white, metallic: 0, wheelParts: [], headlightSpots: []) { d in
+            let m = ModelAsset.defaultMaterial(d)
+            m.roughness.contents = 0.42
+            m.clearCoat.contents = 0.4
+            if let tint { m.multiply.contents = tint }
+            return m
+        }
+    }
+
     /// Фургон Тайлера — высокий, с длинной полосой окон.
     static func van() -> Vehicle {
         let mesh = MeshCache.mesh("veh-van") {
