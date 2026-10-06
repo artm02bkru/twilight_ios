@@ -55,6 +55,8 @@ final class Humanoid {
 
     private let skin: SCNMaterial
     private let iris: SCNMaterial
+    /// Готовое тело из модели (Белла, Эдвард); nil — процедурное тело.
+    private(set) var avatar: AvatarBody?
     /// Материалы одежды — для перекраски (свадебные наряды).
     private var topMaterial: SCNMaterial?
     private var bottomMaterial: SCNMaterial?
@@ -119,9 +121,24 @@ final class Humanoid {
         bind.hipR = V3(0, 0, -0.07)
         apply(bind, time: 0, breathe: false)
 
-        buildSkin()
-        buildFace()
-        buildExtremities()
+        if let name = look.avatar, let model = ModelAsset.named(name),
+           let body = AvatarBody(model: model, vampire: look.vampire) {
+            avatar = body
+            node.addChildNode(body.root)
+            apply(AvatarBody.referencePose, time: 0, breathe: false)
+            body.calibrate(owner: node, joints: [
+                "hips": hips, "spine": spine, "chest": chest, "neck": neck, "head": head,
+                "shoulderL": shoulderL, "elbowL": elbowL, "handL": handL,
+                "shoulderR": shoulderR, "elbowR": elbowR, "handR": handR,
+                "hipL": hipL, "kneeL": kneeL, "ankleL": ankleL,
+                "hipR": hipR, "kneeR": kneeR, "ankleR": ankleR
+            ])
+            if look.vampire { body.setEyes(look.eyes, glow: 0.3) }
+        } else {
+            buildSkin()
+            buildFace()
+            buildExtremities()
+        }
 
         node.scale = SCNVector3(look.height / 1.79, look.height / 1.79, look.height / 1.79)
         snap(.stand)
@@ -351,12 +368,14 @@ final class Humanoid {
         pose = p
         target = p
         apply(p, time: 0, breathe: false)
+        avatar?.sync(owner: node)
     }
 
     /// Алмазный блеск кожи на солнце, 0...1.
     func setSparkle(_ value: Float) {
         guard look.vampire else { return }
         skin.emission.intensity = CGFloat(value * 3.5)
+        avatar?.setSparkle(value)
         if sparkleSystems.isEmpty && value > 0 {
             for (n, r) in [(head, 0.11), (handL, 0.06), (handR, 0.06), (neck, 0.06)] {
                 let ps = Nature.sparkles(shape: SCNSphere(radius: CGFloat(r)))
@@ -380,6 +399,7 @@ final class Humanoid {
         iris.diffuse.contents = color
         iris.emission.contents = color
         iris.emission.intensity = glow
+        avatar?.setEyes(color, glow: glow)
     }
 
     func update(dt: Float, time: Float) {
@@ -406,6 +426,7 @@ final class Humanoid {
         neck.simdEulerAngles += V3(lookPitch * 0.4, lookYaw * 0.4, 0)
         head.simdEulerAngles += V3(lookPitch * 0.6, lookYaw * 0.6, 0)
         updateBlink(dt: dt)
+        avatar?.sync(owner: node)
     }
 
     /// Моргание раз в 2–6 секунд: веко опускается и поднимается за ~0.15 с.

@@ -18,6 +18,19 @@ final class ModelAsset {
         let emission: [Float]
         let transmission: Float
         let texture: String?
+        let normalTexture: String?
+        /// Текстура с вырезами по альфе (листья, пряди волос).
+        let alphaCutout: Bool?
+    }
+
+    /// Кость скелета в позе привязки (мировые координаты модели).
+    struct BoneInfo: Decodable {
+        let name: String
+        let parent: Int
+        let position: [Float]
+        let rotation: [Float]   // x, y, z, w
+        var bindPosition: V3 { V3(position[0], position[1], position[2]) }
+        var bindRotation: simd_quatf { simd_quatf(ix: rotation[0], iy: rotation[1], iz: rotation[2], r: rotation[3]) }
     }
 
     struct Submesh: Decodable {
@@ -31,6 +44,8 @@ final class ModelAsset {
         let pivot: [Float]
         let vertexOffset: Int
         let vertexCount: Int
+        /// Смещение весов скиннинга (4 × UInt16 индекса + 4 × Float веса на вершину), −1 — нет.
+        let skinOffset: Int?
         let submeshes: [Submesh]
         let min: [Float]
         let max: [Float]
@@ -39,12 +54,16 @@ final class ModelAsset {
     private struct Header: Decodable {
         let parts: [PartInfo]
         let materials: [Material]
+        let skeleton: [BoneInfo]?
     }
 
     /// Часть модели: геометрия в локальных координатах вокруг pivot.
     struct Part {
         let info: PartInfo
         let geometry: SCNGeometry
+        /// Источники индексов и весов костей (для персонажей со скелетом).
+        let boneIndices: SCNGeometrySource?
+        let boneWeights: SCNGeometrySource?
         var pivot: V3 { V3(info.pivot[0], info.pivot[1], info.pivot[2]) }
         var boundsMin: V3 { V3(info.min[0], info.min[1], info.min[2]) }
         var boundsMax: V3 { V3(info.max[0], info.max[1], info.max[2]) }
@@ -54,6 +73,8 @@ final class ModelAsset {
 
     let name: String
     let materials: [Material]
+    /// Скелет (родители раньше детей); пуст у статичных моделей.
+    let skeleton: [BoneInfo]
     private(set) var parts: [String: Part] = [:]
     private(set) var partOrder: [String] = []
 
@@ -112,6 +133,7 @@ final class ModelAsset {
             return nil
         }
         materials = header.materials
+        skeleton = header.skeleton ?? []
         let blob = raw.subdata(in: blobStart..<raw.count)
         let stride = 8 * MemoryLayout<Float>.size
 
@@ -139,7 +161,21 @@ final class ModelAsset {
                                                    bytesPerIndex: 4))
             }
             let geometry = SCNGeometry(sources: [positions, normals, uvs], elements: elements)
-            parts[info.name] = Part(info: info, geometry: geometry)
+            var indices: SCNGeometrySource?
+            var weights: SCNGeometrySource?
+            if let so = info.skinOffset, so >= 0 {
+                let skinStride = 4 * 2 + 4 * 4
+                let sEnd = so + count * skinStride
+                guard sEnd <= blob.count else { return nil }
+                let skinData = blob.subdata(in: so..<sEnd)
+                indices = SCNGeometrySource(data: skinData, semantic: .boneIndices, vectorCount: count,
+                                            usesFloatComponents: false, componentsPerVector: 4,
+                                            bytesPerComponent: 2, dataOffset: 0, dataStride: skinStride)
+                weights = SCNGeometrySource(data: skinData, semantic: .boneWeights, vectorCount: count,
+                                            usesFloatComponents: true, componentsPerVector: 4,
+                                            bytesPerComponent: 4, dataOffset: 8, dataStride: skinStride)
+            }
+            parts[info.name] = Part(info: info, geometry: geometry, boneIndices: indices, boneWeights: weights)
             partOrder.append(info.name)
         }
     }
@@ -188,12 +224,28 @@ final class ModelAsset {
         if e.count >= 3, e.max() ?? 0 > 0.01 {
             m.emission.contents = srgb([min(1, e[0]), min(1, e[1]), min(1, e[2]), 1])
         }
+        if let file = d.normalTexture, let img = image(file) {
+            m.normal.contents = img
+            m.normal.intensity = 0.8
+        }
+        if d.alphaCutout == true { makeCutout(m) }
         if d.transmission > 0.5 {
             m.transparency = 0.25
             m.transparencyMode = .dualLayer
             m.roughness.contents = 0.05
         }
         return m
+    }
+
+    /// Вырез по альфе текстуры: пиксели прозрачнее половины отбрасываются,
+    /// остальное рисуется непрозрачным — без проблем сортировки у листвы и прядей волос.
+    static func makeCutout(_ m: SCNMaterial) {
+        m.isDoubleSided = true
+        m.writesToDepthBuffer = true
+        m.shaderModifiers = [.fragment: """
+        if (_output.color.a < 0.5) { discard_fragment(); }
+        _output.color.a = 1.0;
+        """]
     }
 
     static func srgb(_ c: [Float]) -> UIColor {

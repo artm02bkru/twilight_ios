@@ -51,6 +51,8 @@ struct CharacterLook {
     var bowTie: Bool = false
     /// Ширина подола (по умолчанию — 0.36 у длинной юбки, 0.27 у короткой).
     var skirtFlare: Float? = nil
+    /// Готовая модель тела из папки Models (вместо процедурного), если есть.
+    var avatar: String? = nil
 }
 
 /// Актёрский состав.
@@ -68,14 +70,14 @@ enum Cast {
         skin: UIColor(hex: 0xF2D2BE), eyes: UIColor(hex: 0x4A2E1C),
         lips: UIColor(hex: 0xC27D78),
         hair: .long, hairColor: UIColor(hex: 0x3A2316),
-        top: UIColor(hex: 0x3C4B5C), bottom: UIColor(hex: 0x2E3B55))
+        top: UIColor(hex: 0x3C4B5C), bottom: UIColor(hex: 0x2E3B55), avatar: "bella_avatar")
 
     static let edward = CharacterLook(
         name: "Эдвард", height: 1.87, build: 1.0,
         skin: paleSkin, vampire: true, eyes: topaz,
         lips: UIColor(hex: 0xC9A2A0),
         hair: .messy, hairColor: UIColor(hex: 0x7A4A28),
-        top: UIColor(hex: 0x2B2B2E), bottom: UIColor(hex: 0x3A3A40))
+        top: UIColor(hex: 0x2B2B2E), bottom: UIColor(hex: 0x3A3A40), avatar: "edward_avatar")
 
     static let alice = CharacterLook(
         name: "Элис", height: 1.52, build: 0.8, female: true,
@@ -181,6 +183,7 @@ enum Cast {
     /// Свадебное платье: облегающее (шёлк, кружево, атлас, голубое).
     static let bellaBride: CharacterLook = {
         var look = bella
+        look.avatar = nil   // в нарядах — процедурное тело
         look.name = "Белла (невеста)"
         look.top = UIColor(hex: 0xF5EFE2)
         look.bottom = UIColor(hex: 0xF5EFE2)
@@ -200,6 +203,7 @@ enum Cast {
 
     static let edwardGroom: CharacterLook = {
         var look = edward
+        look.avatar = nil   // в нарядах — процедурное тело
         look.name = "Эдвард (жених)"
         look.top = UIColor(hex: 0x111114)
         look.bottom = UIColor(hex: 0x111114)
@@ -211,6 +215,7 @@ enum Cast {
     /// Белла на выпускном: голубое платье и гипс на ноге.
     static let bellaProm: CharacterLook = {
         var look = bella
+        look.avatar = nil   // в нарядах — процедурное тело
         look.top = UIColor(hex: 0x5C86B8)
         look.bottom = UIColor(hex: 0x5C86B8)
         look.skirt = true
@@ -223,6 +228,7 @@ enum Cast {
     /// Эдвард в смокинге.
     static let edwardProm: CharacterLook = {
         var look = edward
+        look.avatar = nil   // в нарядах — процедурное тело
         look.top = UIColor(hex: 0x111114)
         look.bottom = UIColor(hex: 0x111114)
         look.bowTie = true
