@@ -1,0 +1,1 @@
+{"axis": [[1, 0, 0], [0, 0, 1], [0, -1, 0]], "outdir": "../../TwilightNight/Models", "blend": "../../Assets3D/Flower_Arch.usdz", "decimate": {"Object_*": 0.1, "Object_0": 0.1}, "alphaCutout": ["LEAVES", "flower04"], "parts": [{"name": "arch", "rest": true}], "prefix": "flower_arch", "drop": ["Object_2", "Object_3"]}

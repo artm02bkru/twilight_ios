@@ -1,0 +1,16 @@
+# Xcode
+xcuserdata/
+DerivedData/
+build/
+*.xcuserstate
+.DS_Store
+__MACOSX/
+
+# Музыка защищена авторским правом — не коммитим
+TwilightNight/Audio/*.mp3
+TwilightNight/Audio/*.m4a
+TwilightNight/Audio/*.wav
+
+# Сервер лицензий
+__pycache__/
+*.db

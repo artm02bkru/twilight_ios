@@ -1,0 +1,1 @@
+{"axis": [[1, 0, 0], [0, 0, 1], [0, -1, 0]], "outdir": "../../TwilightNight/Models", "blend": "../../Assets3D/Tree_low_poly_lowpoly.usdz", "alphaCutout": ["Tree_1"], "parts": [{"name": "a", "objects": ["Tree_1_Tree_1_0"], "pivotCenter": true}, {"name": "b", "objects": ["Tree_2_Tree_1_0"], "pivotCenter": true}], "prefix": "tree_lowpoly"}

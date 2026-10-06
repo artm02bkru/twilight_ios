@@ -1,0 +1,1 @@
+{"axis": [[1, 0, 0], [0, 0, 1], [0, -1, 0]], "outdir": "../../TwilightNight/Models", "blend": "../../Assets3D/Vehicle_SUV_Skin_Default.usdz", "scale": 100, "parts": [{"name": "body", "rest": true}], "prefix": "suv"}
