@@ -31,7 +31,7 @@ final class ClassroomStage: Stage3D {
             zenith: SIMD3(0.5, 0.54, 0.58), horizon: SIMD3(0.66, 0.68, 0.7), ground: SIMD3(0.3, 0.3, 0.3),
             cloudCover: 1, cloudLight: SIMD3(0.75, 0.77, 0.8), cloudDark: SIMD3(0.5, 0.52, 0.56),
             sunAzimuth: 1, sunElevation: 0.5, sunColor: SIMD3(0.9, 0.92, 0.95), sunGlow: 0.2,
-            sunDisc: false, seed: 81), lighting: 1.0)
+            sunDisc: false, seed: 81), lighting: 0.75)
         scene.background.contents = UIColor(white: 0.1, alpha: 1)
 
         buildRoom(root)
@@ -41,7 +41,7 @@ final class ClassroomStage: Stage3D {
             h.node.setCastsShadow(true)
         }
 
-        cameraSettings.exposureOffset = -0.35
+        cameraSettings.exposureOffset = -0.25
         cameraSettings.bloomIntensity = 0.25
         cameraSettings.bloomThreshold = 1.2
         cameraSettings.saturation = 0.88
@@ -74,8 +74,9 @@ final class ClassroomStage: Stage3D {
         root.addChildNode(view)
 
         // Холодный дневной свет сквозь окна.
-        let daylight = Stage3D.spotLight(color: UIColor(red: 0.82, green: 0.88, blue: 1, alpha: 1), intensity: 1300,
+        let daylight = Stage3D.spotLight(color: UIColor(red: 0.82, green: 0.88, blue: 1, alpha: 1), intensity: 1800,
                                          angle: 80, range: 30, shadows: true)
+        daylight.light?.shadowColor = UIColor(white: 0, alpha: 0.35)
         daylight.simdPosition = V3(-10, 3.4, 1.0)
         daylight.simdLook(at: V3(0, 0.3, 1.0))
         root.addChildNode(daylight)
@@ -83,10 +84,10 @@ final class ClassroomStage: Stage3D {
         // Лампы дневного света под потолком.
         for (i, z) in [Float(-1.6), 2.6].enumerated() {
             let l = addOmni(at: V3(0, 2.4, z), color: UIColor(red: 0.92, green: 0.95, blue: 1, alpha: 1),
-                            intensity: 900, range: 14)
+                            intensity: 700, range: 14)
             if i == 1 { flicker = l }
         }
-        addAmbient(color: UIColor(red: 0.6, green: 0.62, blue: 0.68, alpha: 1), intensity: 420)
+        addAmbient(color: UIColor(red: 0.6, green: 0.62, blue: 0.68, alpha: 1), intensity: 240)
 
         // На доске — тема урока, синим маркером.
         let marker = Materials.pbr(UIColor(hex: 0x1B2A6B), roughness: 0.5)
@@ -184,7 +185,7 @@ final class ClassroomStage: Stage3D {
 
     override func updateAmbient(dt: Float) {
         for h in everyone { h.update(dt: dt, time: time) }
-        let f: CGFloat = sin(time * 17) + sin(time * 23) > 1.7 ? 250 : 900
+        let f: CGFloat = sin(time * 17) + sin(time * 23) > 1.7 ? 200 : 700
         flicker.light?.intensity = f
     }
 

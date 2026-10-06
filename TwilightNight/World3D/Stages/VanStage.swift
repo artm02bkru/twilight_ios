@@ -30,8 +30,15 @@ final class VanStage: Stage3D {
     /// Горизонталь игры (0...1, с запасом) → мировой X центра фургона.
     private func worldX(_ v: CGFloat) -> Float { -5 + (Float(v) + 0.25) * 10 }
 
+    /// Подсветка борта в кадрах со вмятиной: тёмная краска ночью иначе её прячет.
+    private let dentLight = Stage3D.spotLight(color: UIColor(red: 0.85, green: 0.9, blue: 1, alpha: 1),
+                                              intensity: 0, angle: 34, range: 12)
+
     override init() {
         super.init()
+        dentLight.simdPosition = V3(-5.2, 2.6, 1.9)
+        dentLight.simdLook(at: V3(-3.38, 1.15, 0.0))
+        scene.rootNode.addChildNode(dentLight)
         let root = scene.rootNode
 
         setSky(Textures.SkyStyle(
@@ -364,6 +371,8 @@ final class VanStage: Stage3D {
     override func beginShot(_ cue: Cue) {
         zone.isHidden = true
         zoneEdges.isHidden = true
+        let showDent = cue == .lotDent || cue == .lotFacesBella || cue == .lotFacesEdward
+        dentLight.light?.intensity = showDent ? 1600 : 0
         bella.lookAt = nil
         edward.lookAt = nil
         edward.opacity = 1

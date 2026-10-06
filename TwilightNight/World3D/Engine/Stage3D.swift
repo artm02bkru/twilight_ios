@@ -157,6 +157,9 @@ class Stage3D {
             light.shadowSampleCount = 8
             light.shadowRadius = 4
             light.shadowMapSize = CGSize(width: 1024, height: 1024)
+            // Отложенная тень затемняет итоговый цвет: непрозрачно-чёрная по умолчанию
+            // делала всё в тени (персонажей в классе) совсем чёрным, без учёта другого света.
+            light.shadowColor = UIColor(white: 0, alpha: 0.55)
         }
         let node = SCNNode()
         node.light = light
