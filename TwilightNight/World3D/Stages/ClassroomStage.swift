@@ -33,7 +33,7 @@ final class ClassroomStage: Stage3D {
             zenith: SIMD3(0.5, 0.54, 0.58), horizon: SIMD3(0.66, 0.68, 0.7), ground: SIMD3(0.3, 0.3, 0.3),
             cloudCover: 1, cloudLight: SIMD3(0.75, 0.77, 0.8), cloudDark: SIMD3(0.5, 0.52, 0.56),
             sunAzimuth: 1, sunElevation: 0.5, sunColor: SIMD3(0.9, 0.92, 0.95), sunGlow: 0.2,
-            sunDisc: false, seed: 81), lighting: 0.35)
+            sunDisc: false, seed: 81), lighting: 0.28)
         scene.background.contents = UIColor(white: 0.1, alpha: 1)
 
         buildRoom(root)
@@ -43,11 +43,11 @@ final class ClassroomStage: Stage3D {
             h.node.setCastsShadow(true)
         }
 
-        cameraSettings.exposureOffset = -0.45
+        cameraSettings.exposureOffset = -1.0
+        cameraSettings.contrast = 0.22
         cameraSettings.bloomIntensity = 0.25
         cameraSettings.bloomThreshold = 1.2
         cameraSettings.saturation = 0.88
-        cameraSettings.contrast = 0.14
         placeCamera(eye: V3(-1.7, 1.5, 2.4), target: microscopeSpot, fov: 52)
     }
 
@@ -126,7 +126,7 @@ final class ClassroomStage: Stage3D {
             return Materials.pbr(UIColor(white: 0.86, alpha: 1), roughness: 0.92, normal: Textures.groundNormal,
                                  normalIntensity: 0.2, tile: 14)
         case "wall":
-            return Materials.pbr(UIColor(hex: 0xB9B3A2), roughness: 0.88, normal: Textures.groundNormal,
+            return Materials.pbr(UIColor(hex: 0xA59F8F), roughness: 0.9, normal: Textures.groundNormal,
                                  normalIntensity: 0.1, tile: 5)
         case "Wood", "Wood.001":
             return Materials.wood(tile: 1.5, roughness: 0.42)
