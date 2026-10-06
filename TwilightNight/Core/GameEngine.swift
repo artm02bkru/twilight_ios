@@ -243,7 +243,10 @@ final class GameEngine: ObservableObject {
             return
         }
         playback.shotTime += dt
-        if playback.shotTime >= playback.shot.duration {
+        // Кадр не кончается, пока не договорили реплику (если для него есть озвучка).
+        let voice = SoundFX.shared.voiceLength("\(playback.shot.cue)") ?? 0
+        let length = max(playback.shot.duration, voice + 0.45)
+        if playback.shotTime >= length {
             playback.index += 1
             playback.shotTime = 0
         }
