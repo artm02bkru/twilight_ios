@@ -136,19 +136,6 @@ final class WeddingStage: Stage3D {
     /// Садовые деревья вдоль поляны: подстриженные кроны и лиственные деревья из моделей.
     private func buildGardenTrees(_ root: SCNNode) {
         var rng = SeededRandom(seed: 71)
-        if let pack = ModelAsset.named("tree_pack") {
-            // Фигурные кроны по сторонам прохода.
-            let spots: [(V3, String)] = [(V3(-6.5, 0, 3), "t1"), (V3(6.5, 0, 3), "t2"), (V3(-7, 0, 9), "t5"),
-                                         (V3(7, 0, 9), "t1"), (V3(-9, 0, -4), "t2"), (V3(9.5, 0, -4), "t5")]
-            for (p, name) in spots {
-                guard let t = pack.grounded(name) else { continue }
-                t.simdPosition = p
-                t.simdEulerAngles.y = rng.range(0, 6.28)
-                t.simdScale = V3(repeating: rng.range(1.1, 1.4))
-                t.setCastsShadow(true)
-                root.addChildNode(t)
-            }
-        }
         if let trees = ModelAsset.named("tree_lowpoly") {
             for i in 0..<10 {
                 let a: Float = Float(i) * 0.44 - 0.63

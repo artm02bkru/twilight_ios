@@ -107,7 +107,7 @@ final class MeadowStage: Stage3D {
             let r: Float = 23.5 + Float(k % 3) * 1.6
             edge.append(V3(sin(a) * r, 0, cos(a) * r))
         }
-        if let grove = ModelAsset.grove(parts: [("tree_lowpoly", "a"), ("tree_lowpoly", "b"), ("tree_pack", "t3")],
+        if let grove = ModelAsset.grove(parts: [("tree_lowpoly", "a"), ("tree_lowpoly", "b")],
                                         spots: edge.filter { abs($0.x) > 3 || $0.z > 0 }, scale: 2.4...3.4, seed: 33) {
             root.addChildNode(grove)
         }

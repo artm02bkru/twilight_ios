@@ -39,6 +39,7 @@ final class ShotTour {
         func card(_ name: String, _ c: Chapter) -> Item {
             Item(name: name, apply: { $0.tourShow(c, cutscene: nil) })
         }
+        // Сгруппировано по площадкам: каждая строится один раз (на CI это минуты).
         return [
             Item(name: "00_menu", apply: { $0.goToMenu() }, settle: 2.5),
             play("01_class_play", .biology),
@@ -46,20 +47,15 @@ final class ShotTour {
             cut("03_class_microscope", .biology, .intro(.biology), 3),
             card("04_class_card", .biology),
             play("05_street_run", .portAngeles, settle: 4),
-            play("06_forest_run", .forest, settle: 4),
-            play("07_baseball_play", .baseball),
-            cut("08_meadow_lying", .meadow, .outro(.meadow), 0),
-            play("09_chase_run", .chase, settle: 4),
-            play("10_prom", .prom),
-            play("11_wedding", .wedding),
-            cut("12_van_dent", .van, .outro(.van), 0),
-            cut("13_prologue_truck", .biology, .prologue, 1),
-            cut("14_class_edward_stare", .biology, .intro(.biology), 2),
-            cut("15_meadow_reveal", .meadow, .intro(.meadow), 1),
-            cut("16_forest_back", .forest, .intro(.forest), 0),
-            cut("17_baseball_pitch", .baseball, .intro(.baseball), 2),
-            cut("18_studio", .studio, .intro(.studio), 1),
-            cut("19_finale_aisle", .wedding, .finale, 0)
+            cut("06_street_getin", .portAngeles, .outro(.portAngeles), 1),
+            play("07_forest_run", .forest, settle: 4),
+            cut("08_forest_back", .forest, .intro(.forest), 0),
+            cut("09_meadow_lying", .meadow, .outro(.meadow), 0),
+            play("10_baseball_play", .baseball),
+            play("11_chase_run", .chase, settle: 4),
+            play("12_prom", .prom),
+            play("13_wedding", .wedding),
+            cut("14_van_dent", .van, .outro(.van), 0)
         ]
     }
 
@@ -76,7 +72,7 @@ final class ShotTour {
                 item.apply(engine)
                 // Ждём, пока площадка построится и затемнение пройдёт.
                 var waited = 0.0
-                while (!director.isReady(engine.stageID) || director.isLoading) && waited < 45 {
+                while (!director.isReady(engine.stageID) || director.isLoading) && waited < 300 {
                     try? await Task.sleep(nanoseconds: 200_000_000)
                     waited += 0.2
                 }

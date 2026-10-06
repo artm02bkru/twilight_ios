@@ -117,11 +117,12 @@ final class ForestRunStage: RunnerStageBase {
         // Деревья из моделей у самой тропы.
         var spots: [V3] = []
         for k in 0..<12 {
+            // Дальше от тропы: камеры кат-сцен ходят в пределах ~10 м от неё.
             let side: Float = k % 2 == 0 ? 1 : -1
-            spots.append(V3(side * rng.range(5.5, 13), 0, -Float(k) / 12 * L - rng.range(0, L / 12)))
+            spots.append(V3(side * rng.range(15, 30), 0, -Float(k) / 12 * L - rng.range(0, L / 12)))
         }
-        if let grove = ModelAsset.grove(parts: [("tree_lowpoly", "a"), ("tree_pack", "t3"), ("tree_lowpoly", "b"), ("tree_pack", "t4")],
-                                        spots: spots, scale: 2.2...3.2, seed: UInt64(70 + index)) {
+        if let grove = ModelAsset.grove(parts: [("tree_lowpoly", "a"), ("tree_lowpoly", "b")],
+                                        spots: spots, scale: 3.0...4.2, seed: UInt64(70 + index)) {
             seg.addChildNode(grove)
         }
         return seg
