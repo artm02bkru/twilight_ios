@@ -35,6 +35,7 @@ final class AvatarBody {
     /// Материалы кожи — для алмазного блеска Эдварда на солнце.
     private(set) var skinMaterials: [SCNMaterial] = []
     private var eyeMaterials: [SCNMaterial] = []
+    private var outfitMaterials: [SCNMaterial] = []
 
     /// Соответствие костей модели (стандартные имена Mixamo/Avaturn) суставам `Humanoid`.
     static let boneMap: [String: String] = [
@@ -95,17 +96,20 @@ final class AvatarBody {
         var built: [Int: SCNMaterial] = [:]
         var skins: [SCNMaterial] = []
         var eyes: [SCNMaterial] = []
+        var outfits: [SCNMaterial] = []
         geometry.materials = part.materialIndices.map { index in
             if let m = built[index] { return m }
             let d = model.materials[index]
             let m = Self.material(d, vampire: vampire)
             if d.name == "AvatarHead" || d.name == "AvatarBody" { skins.append(m) }
             if d.name.hasSuffix("Eyeball") { eyes.append(m) }
+            if d.name == "outfit" { outfits.append(m) }
             built[index] = m
             return m
         }
         skinMaterials = skins
         eyeMaterials = eyes
+        outfitMaterials = outfits
         let mesh = SCNNode(geometry: geometry)
         mesh.name = "avatar-skin"
         mesh.castsShadow = true
@@ -172,6 +176,14 @@ final class AvatarBody {
         for m in eyeMaterials {
             m.setValue(tint, forKey: "irisTint")
             m.setValue(NSNumber(value: Float(glow)), forKey: "irisGlow")
+        }
+    }
+
+    /// Перекрасить одежду модели (нарядная рубашка, тёмный костюм). nil — исходные цвета.
+    func tintOutfit(_ color: UIColor?) {
+        for m in outfitMaterials {
+            m.multiply.contents = color ?? UIColor.white
+            m.roughness.contents = color == nil ? 0.82 : 0.6
         }
     }
 

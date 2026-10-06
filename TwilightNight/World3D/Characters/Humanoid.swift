@@ -134,6 +134,7 @@ final class Humanoid {
                 "hipR": hipR, "kneeR": kneeR, "ankleR": ankleR
             ])
             if look.vampire { body.setEyes(look.eyes, glow: 0.3) }
+            dressAvatar(body)
         } else {
             buildSkin()
             buildFace()
@@ -301,6 +302,45 @@ final class Humanoid {
 
     // MARK: Кисти и обувь
 
+    /// Наряды поверх готовой модели: длинное платье (юбка на тазу), тёмный костюм, бабочка.
+    private func dressAvatar(_ body: AvatarBody) {
+        let formal = look.skirt || look.bowTie || look.coat
+        guard formal else { return }
+        body.tintOutfit(Self.outfitTint(look.top))
+        if look.skirt {
+            let flare = look.skirtFlare ?? (look.longSkirt ? 0.4 : 0.3)
+            let length: Float = look.longSkirt ? 0.98 : 0.55
+            let cloth = Materials.cloth(look.bottom, roughness: 0.5, sheen: true)
+            cloth.isDoubleSided = true
+            bottomMaterial = cloth
+            let cone = SCNCone(topRadius: 0.15, bottomRadius: CGFloat(flare), height: CGFloat(length))
+            cone.radialSegmentCount = 48
+            cone.heightSegmentCount = 6
+            let skirt = SCNNode(cone, cloth)
+            skirt.name = "skirt"
+            // Верх юбки — на талии чуть выше тазовой кости.
+            skirt.simdPosition = V3(0, 0.1 - length / 2, 0.01)
+            skirt.castsShadow = true
+            hips.addChildNode(skirt)
+        }
+        if look.bowTie {
+            let bow = Materials.cloth(UIColor(white: 0.03, alpha: 1), roughness: 0.35, sheen: true)
+            for side: Float in [-1, 1] {
+                let wing = SCNNode(SCNBox(width: 0.045, height: 0.035, length: 0.015, chamferRadius: 0.008), bow)
+                wing.simdPosition = V3(side * 0.024, 0.0, 0.075)
+                wing.simdEulerAngles.z = side * 0.25
+                neck.addChildNode(wing)
+            }
+        }
+    }
+
+    /// Цвет одежды как множитель текстуры: чёрный не делаем совсем чёрным — пропадёт ткань.
+    private static func outfitTint(_ c: UIColor) -> UIColor {
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        c.getRed(&r, green: &g, blue: &b, alpha: &a)
+        return UIColor(red: max(r, 0.11), green: max(g, 0.11), blue: max(b, 0.12), alpha: 1)
+    }
+
     private func buildExtremities() {
         let female = look.female
         let left = MeshCache.mesh("hand-L-\(female)") {
@@ -392,6 +432,7 @@ final class Humanoid {
     func setOutfit(top: UIColor, bottom: UIColor? = nil) {
         topMaterial?.diffuse.contents = top
         bottomMaterial?.diffuse.contents = bottom ?? top
+        if let avatar, look.skirt || look.bowTie || look.coat { avatar.tintOutfit(Self.outfitTint(top)) }
     }
 
     /// Свечение глаз (жажда — красным).

@@ -183,7 +183,6 @@ enum Cast {
     /// Свадебное платье: облегающее (шёлк, кружево, атлас, голубое).
     static let bellaBride: CharacterLook = {
         var look = bella
-        look.avatar = nil   // в нарядах — процедурное тело
         look.name = "Белла (невеста)"
         look.top = UIColor(hex: 0xF5EFE2)
         look.bottom = UIColor(hex: 0xF5EFE2)
@@ -203,7 +202,6 @@ enum Cast {
 
     static let edwardGroom: CharacterLook = {
         var look = edward
-        look.avatar = nil   // в нарядах — процедурное тело
         look.name = "Эдвард (жених)"
         look.top = UIColor(hex: 0x111114)
         look.bottom = UIColor(hex: 0x111114)
@@ -215,7 +213,6 @@ enum Cast {
     /// Белла на выпускном: голубое платье и гипс на ноге.
     static let bellaProm: CharacterLook = {
         var look = bella
-        look.avatar = nil   // в нарядах — процедурное тело
         look.top = UIColor(hex: 0x5C86B8)
         look.bottom = UIColor(hex: 0x5C86B8)
         look.skirt = true
@@ -228,7 +225,6 @@ enum Cast {
     /// Эдвард в смокинге.
     static let edwardProm: CharacterLook = {
         var look = edward
-        look.avatar = nil   // в нарядах — процедурное тело
         look.top = UIColor(hex: 0x111114)
         look.bottom = UIColor(hex: 0x111114)
         look.bowTie = true

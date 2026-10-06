@@ -41,32 +41,25 @@ final class ShotTour {
         }
         return [
             Item(name: "00_menu", apply: { $0.goToMenu() }, settle: 2.5),
-            cut("01_prologue_truck", .biology, .prologue, 1),
-            cut("02_class_establish", .biology, .intro(.biology), 0),
-            cut("03_class_bella_enters", .biology, .intro(.biology), 1),
-            cut("04_class_edward_stare", .biology, .intro(.biology), 2),
-            cut("05_class_microscope", .biology, .intro(.biology), 3),
-            card("06_class_card", .biology),
-            play("07_class_play", .biology),
-            cut("08_van_skid", .van, .intro(.van), 3),
-            play("09_van_play", .van),
-            cut("10_van_dent", .van, .outro(.van), 0),
-            play("11_street_run", .portAngeles, settle: 4),
-            cut("12_street_getin", .portAngeles, .outro(.portAngeles), 1),
-            cut("13_meadow_reveal", .meadow, .intro(.meadow), 1),
-            play("14_meadow_play", .meadow),
-            cut("15_meadow_lying", .meadow, .outro(.meadow), 0),
-            cut("16_meadow_lying_close", .meadow, .outro(.meadow), 1),
-            cut("17_forest_back", .forest, .intro(.forest), 0),
-            play("18_forest_run", .forest, settle: 4),
-            cut("19_baseball_pitch", .baseball, .intro(.baseball), 2),
-            play("20_baseball_play", .baseball),
-            cut("21_chase_depart", .chase, .intro(.chase), 0),
-            play("22_chase_run", .chase, settle: 4),
-            cut("23_studio", .studio, .intro(.studio), 1),
-            play("24_prom", .prom),
-            play("25_wedding", .wedding),
-            cut("26_finale_aisle", .wedding, .finale, 0)
+            play("01_class_play", .biology),
+            cut("02_class_bella_enters", .biology, .intro(.biology), 1),
+            cut("03_class_microscope", .biology, .intro(.biology), 3),
+            card("04_class_card", .biology),
+            play("05_street_run", .portAngeles, settle: 4),
+            play("06_forest_run", .forest, settle: 4),
+            play("07_baseball_play", .baseball),
+            cut("08_meadow_lying", .meadow, .outro(.meadow), 0),
+            play("09_chase_run", .chase, settle: 4),
+            play("10_prom", .prom),
+            play("11_wedding", .wedding),
+            cut("12_van_dent", .van, .outro(.van), 0),
+            cut("13_prologue_truck", .biology, .prologue, 1),
+            cut("14_class_edward_stare", .biology, .intro(.biology), 2),
+            cut("15_meadow_reveal", .meadow, .intro(.meadow), 1),
+            cut("16_forest_back", .forest, .intro(.forest), 0),
+            cut("17_baseball_pitch", .baseball, .intro(.baseball), 2),
+            cut("18_studio", .studio, .intro(.studio), 1),
+            cut("19_finale_aisle", .wedding, .finale, 0)
         ]
     }
 
@@ -79,10 +72,11 @@ final class ShotTour {
             // Дать меню построиться.
             try? await Task.sleep(nanoseconds: 3_000_000_000)
             for item in items {
+                try? item.name.write(to: folder.appendingPathComponent("progress.txt"), atomically: true, encoding: .utf8)
                 item.apply(engine)
                 // Ждём, пока площадка построится и затемнение пройдёт.
                 var waited = 0.0
-                while (!director.isReady(engine.stageID) || director.isLoading) && waited < 60 {
+                while (!director.isReady(engine.stageID) || director.isLoading) && waited < 45 {
                     try? await Task.sleep(nanoseconds: 200_000_000)
                     waited += 0.2
                 }
