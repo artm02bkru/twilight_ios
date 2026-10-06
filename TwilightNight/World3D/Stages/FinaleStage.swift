@@ -177,7 +177,7 @@ final class FinaleStage: Stage3D {
             switch s.lastJudgement {
             case .perfect?:
                 spinSpeed = min(0.9, spinSpeed + 0.08)
-                SoundFX.shared.play(.chime, volume: 0.35)
+                SoundFX.shared.play(.sparkle, volume: 0.35)
             case .good?:
                 spinSpeed = min(0.7, spinSpeed + 0.03)
             case .miss?:

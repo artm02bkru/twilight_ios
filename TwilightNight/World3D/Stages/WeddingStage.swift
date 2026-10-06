@@ -619,7 +619,7 @@ final class WeddingStage: Stage3D {
             b.lookAt = edward.head.simdWorldPosition
             edward.lookAt = b.head.simdWorldPosition
             alice.place(V3(-2.6, 0, 1.2), yaw: Float.pi / 2)
-            if cue == .weddingKiss { SoundFX.shared.play(.chime, volume: 0.8) }
+            if cue == .weddingKiss { SoundFX.shared.play(.sparkle, volume: 0.8) }
         default:
             break
         }

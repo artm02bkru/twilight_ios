@@ -231,9 +231,9 @@ class Stage3D {
 
     func enterIdle() { enterGameplay() }
     func updateIdle(dt: Float) {
-        // По умолчанию — медленный облёт текущей точки.
-        let a = time * 0.05
-        placeCamera(eye: target + rotateY(V3(0, 2.5, 9), a), target: target)
+        // По умолчанию — ровный кадр на текущую точку с лёгким наездом (без облёта по кругу).
+        let d = 9 - sin(time * 0.15) * 0.3
+        placeCamera(eye: target + V3(0, 2.5, d), target: target)
     }
 
     /// Каждый кадр, в любом режиме: погода, дыхание персонажей, огоньки.

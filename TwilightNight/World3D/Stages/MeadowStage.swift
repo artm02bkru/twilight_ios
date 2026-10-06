@@ -215,12 +215,14 @@ final class MeadowStage: Stage3D {
         // Кожа на солнце горит алмазами; в тени — лишь редкие искры.
         let sun = sunlight(at: x, engine: engine)
         edward.setSparkle(max(sun, Float(s.glitter) * 0.12))
-        if sun > 0.5 && !wasInSun { SoundFX.shared.play(.chime, volume: 0.6) }
+        if sun > 0.5 && !wasInSun { SoundFX.shared.play(.sparkle, volume: 0.6) }
         wasInSun = sun > 0.5
         bella.lookAt = edward.head.simdWorldPosition
         if s.hurtFlash > 0.9 { shake = 0.6 }
 
-        followCamera(eye: V3(x * 0.25, 3.0, 11), target: V3(x * 0.4, 1.1, 0), fov: 62, rate: 3, dt: max(dt, 0.016))
+        // Камера смотрит прямо на поляну и лишь сдвигается вслед за Эдвардом, не поворачиваясь.
+        let cx = x * 0.3
+        followCamera(eye: V3(cx, 3.0, 11), target: V3(cx, 1.1, 0), fov: 62, rate: 3, dt: max(dt, 0.016))
     }
 
     override func enterIdle() {
@@ -229,8 +231,9 @@ final class MeadowStage: Stage3D {
     }
 
     override func updateIdle(dt: Float) {
-        let a = time * 0.05
-        placeCamera(eye: rotateY(V3(0, 2.6, 12), a), target: V3(0, 1, -1), fov: 58)
+        // Ровный фронтальный кадр с едва заметным наездом.
+        let d = 12 - sin(time * 0.15) * 0.4
+        placeCamera(eye: V3(0, 2.6, d), target: V3(0, 1, -1), fov: 58)
     }
 
     private func setKey(color: UIColor, intensity: CGFloat) {
@@ -258,7 +261,7 @@ final class MeadowStage: Stage3D {
             edward.lookAt = bella.head.simdWorldPosition
             bella.lookAt = edward.head.simdWorldPosition
         case .edwardSteps:
-            SoundFX.shared.play(.chime, volume: 0.8, delay: 2.0)
+            SoundFX.shared.play(.sparkle, volume: 0.8, delay: 2.0)
             heroBeam.set(x: 2.2, radius: 1.4, strength: 1)
             heroBeam.node.simdPosition = V3(2.2, 0, -17.2)
             bella.place(V3(0.4, 0, -14.6), yaw: -Float.pi + 0.5)

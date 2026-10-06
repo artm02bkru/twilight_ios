@@ -9,7 +9,7 @@ final class SoundFX {
     static let shared = SoundFX()
 
     enum Effect: CaseIterable {
-        case thunder, thunderNear, skid, impact, batCrack, whiff, heartbeat, chime, whoosh, chirp
+        case thunder, thunderNear, skid, impact, batCrack, whiff, heartbeat, chime, whoosh, chirp, sparkle
     }
 
     enum Ambience: CaseIterable {
@@ -320,6 +320,17 @@ final class SoundFX {
                 for (k, f) in notes.enumerated() {
                     let x = t - Float(k) * 0.07
                     if x > 0 { s += sin(x * f * 2 * Float.pi) * exp(-x * 4) * 0.12 }
+                }
+                return s
+            }
+        case .sparkle:
+            // Тихий хрустальный перелив — кожа Эдварда на солнце (не путать со школьным звонком).
+            return buffer(seconds: 1.6) { _, t in
+                let notes: [Float] = [3136, 3951, 4699, 5274, 3520]
+                var s: Float = 0
+                for (k, f) in notes.enumerated() {
+                    let x = t - Float(k) * 0.11
+                    if x > 0 { s += sin(x * f * 2 * Float.pi) * exp(-x * 5) * 0.05 }
                 }
                 return s
             }
