@@ -26,6 +26,15 @@ struct MenuOverlay: View {
                         .opacity(appeared ? 1 : 0)
                         .offset(y: appeared ? 0 : -16)
 
+                    // Подпись разработчика.
+                    Text("by @twilight_xbot")
+                        .font(Theme.body(14, weight: .medium).italic())
+                        .tracking(1.5)
+                        .foregroundColor(Theme.ice.opacity(0.8))
+                        .shadow(color: .black.opacity(0.6), radius: 4)
+                        .padding(.top, 2)
+                        .opacity(appeared ? 1 : 0)
+
                     Text("ИСТОРИЯ БЕЛЛЫ И ЭДВАРДА")
                         .font(Theme.body(13, weight: .semibold))
                         .tracking(6)
