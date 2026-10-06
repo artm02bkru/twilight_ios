@@ -44,11 +44,8 @@ final class ChaseStage: RunnerStageBase {
 
         root.addChildNode(car.node)
         car.setHeadlights(1)
-        if let lamp = car.headlights.first?.light {
-            lamp.castsShadow = true
-            lamp.shadowMode = .deferred
-            lamp.shadowSampleCount = 4
-        }
+        // Тень от фар в тумане давала огромное тёмное пятно над дорогой — без неё.
+        for lamp in car.headlights { lamp.light?.castsShadow = false }
         root.addChildNode(hunter.node)
         hunter.setHeadlights(1)
 
@@ -277,8 +274,8 @@ final class ChaseStage: RunnerStageBase {
             c.strokePath()
         }
         for _ in 0..<chevronCount {
-            let m = Materials.glowImage(image, color: UIColor(red: 0.35, green: 1, blue: 0.75, alpha: 1), intensity: 1.6)
-            let plane = SCNNode(SCNPlane(width: 0.9, height: 0.9), m)
+            let m = Materials.glowImage(image, color: UIColor(red: 0.35, green: 1, blue: 0.75, alpha: 1), intensity: 2.6)
+            let plane = SCNNode(SCNPlane(width: 1.3, height: 1.1), m)
             plane.eulerAngles.x = -Float.pi / 2
             let n = SCNNode()
             n.addChildNode(plane)

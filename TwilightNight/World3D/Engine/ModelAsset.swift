@@ -266,9 +266,9 @@ final class ModelAsset {
             group.addChildNode(t)
         }
         guard !group.childNodes.isEmpty else { return nil }
-        let flat = group.flattenedClone()
-        flat.castsShadow = false
-        return flat
+        // Без flattenedClone: на перемежённых буферах он терял положения — все деревья в одной точке.
+        group.setCastsShadow(false)
+        return group
     }
 
     /// Все части одним узлом (статичная модель).

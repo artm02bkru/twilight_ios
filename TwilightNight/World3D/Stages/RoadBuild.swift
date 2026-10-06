@@ -404,9 +404,11 @@ enum RoadBuild {
         ps.particleVelocityVariation = 14
         ps.emittingDirection = SCNVector3(0.10, -1, 0.04)
         ps.spreadingAngle = 4
-        ps.particleSize = 0.34
-        ps.particleSizeVariation = 0.16
-        ps.particleImage = rainStreakImage()
+        // Тонкие капли, растянутые по скорости в штрихи (картинка-штрих рисовалась квадратами).
+        ps.particleSize = 0.022
+        ps.particleSizeVariation = 0.008
+        ps.stretchFactor = 0.035
+        ps.particleImage = Textures.softDot
         ps.particleColor = UIColor(white: 0.88, alpha: 0.42)
         ps.particleColorVariation = SCNVector4(0, 0, 0, 0.22)
         ps.blendMode = .alpha

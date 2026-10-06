@@ -78,6 +78,13 @@ final class ShotTour {
                 }
                 try? await Task.sleep(nanoseconds: UInt64((1.2 + item.settle) * 1_000_000_000))
                 save(director.view.snapshot(), name: item.name)
+                let cam = director.currentCamera?.simdWorldPosition ?? .zero
+                let line = "\(item.name): want=\(engine.stageID) shown=\(director.currentStage.map { "\($0)" } ?? "nil") waited=\(Int(waited))s cam=(\(cam.x), \(cam.y), \(cam.z)) phase=\(engine.phase)\n"
+                if let h = try? FileHandle(forWritingTo: folder.appendingPathComponent("info.txt")) {
+                    h.seekToEndOfFile(); h.write(line.data(using: .utf8)!); try? h.close()
+                } else {
+                    try? line.write(to: folder.appendingPathComponent("info.txt"), atomically: true, encoding: .utf8)
+                }
                 if let window = director.view.window {
                     let renderer = UIGraphicsImageRenderer(bounds: window.bounds)
                     let full = renderer.image { _ in

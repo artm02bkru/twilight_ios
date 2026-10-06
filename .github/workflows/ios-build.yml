@@ -60,7 +60,7 @@ jobs:
             sleep 5
           done
           mkdir -p shots
-          cp "$C"/Documents/shots/*.jpg shots/ || true
+          cp "$C"/Documents/shots/*.jpg "$C"/Documents/shots/info.txt shots/ || true
           xcrun simctl io "$UDID" screenshot shots/zz_last_screen.png || true
           ls shots
 

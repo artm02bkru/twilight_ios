@@ -92,6 +92,9 @@ final class WorldDirector: ObservableObject {
     }
 
     func isReady(_ id: StageID) -> Bool { stages[id] != nil }
+    /// Какая площадка сейчас на экране (для фототура).
+    var currentStage: StageID? { current }
+    var currentCamera: SCNNode? { current.flatMap { stages[$0]?.camera } }
 
     /// В раннерах важнее плавность: рендер в 75% разрешения и сглаживание 2x.
     private func applyQuality(for stage: Stage3D) {
