@@ -205,11 +205,11 @@ final class BaseballStage: Stage3D {
 
     // MARK: - Погода
 
-    override var ambience: [SoundFX.Ambience: Float] { [.heavyRain: 0.8, .wind: 0.4] }
+    override var ambience: [SoundFX.Ambience: Float] { [.heavyRain: 1.0, .wind: 0.8] }
 
     private func strike() {
         // Гром догоняет вспышку с задержкой — молния далеко.
-        SoundFX.shared.play(.thunder, volume: 0.9, delay: Double.random(in: 0.3...1.4))
+        SoundFX.shared.play(.thunder, volume: 1.0, delay: Double.random(in: 0.3...1.4))
         strikeSeed &+= 1
         var rng = SeededRandom(seed: strikeSeed)
         let base = V3(rng.range(-120, 120), 0, rng.range(-200, -110))

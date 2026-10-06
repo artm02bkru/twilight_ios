@@ -314,7 +314,7 @@ final class StreetStage: RunnerStageBase {
         bella.target = Pose.walk(time * 5)
         bella.rate = 16
         let p = V3(0, 0, playerZ)
-        placeCamera(eye: p + V3(3, 1.6, -4), target: p + V3(0, 1.3, 0), fov: 48)
+        placeCamera(eye: p + V3(0, 1.9, 4.5), target: p + V3(0, 1.3, -5), fov: 50)
     }
 
     // MARK: - Кат-сцены

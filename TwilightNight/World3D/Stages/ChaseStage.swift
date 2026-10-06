@@ -348,7 +348,7 @@ final class ChaseStage: RunnerStageBase {
         playerZ -= dt * 20
         placeCar(x: 0, z: playerZ, steer: 0, speed: 20, dt: dt)
         let p = V3(0, 0, playerZ)
-        placeCamera(eye: p + V3(4.5, 1.4, -3), target: p + V3(0, 0.8, 1), fov: 50)
+        placeCamera(eye: p + V3(0, 2.6, 8), target: p + V3(0, 0.8, -12), fov: 55)
     }
 
     // MARK: - Кат-сцены

@@ -252,7 +252,8 @@ final class ForestRunStage: RunnerStageBase {
         playerZ -= dt * 6
         placeRunners(running: true, dt: dt, speed: 6)
         let p = V3(playerX, 0, playerZ)
-        placeCamera(eye: p + V3(3.5, 1.8, 4.5), target: p + V3(0, 1.3, 0), fov: 50)
+        // Прямо сзади, как в самом забеге.
+        placeCamera(eye: p + V3(0, 2.2, 5.5), target: p + V3(0, 1.3, -6), fov: 52)
     }
 
     // MARK: - Кат-сцены
@@ -295,21 +296,24 @@ final class ForestRunStage: RunnerStageBase {
         case .forestOnBack:
             edward.target = p < 0.5 ? .stand : Pose.carryRun(0)
             let c = V3(0, 1.3, 0)
-            placeCamera(eye: c + rotateY(V3(2.6, 0.3, -2.6), p * 0.8), target: c, fov: 42)
+            // Спереди и ровно: лица обоих, медленный наезд вместо облёта.
+            dolly(p, eye: (c + V3(0, 0.25, -3.2), c + V3(0, 0.15, -2.5)), look: (c, c), fov: (42, 40))
         case .forestTreetops:
             playerZ -= dt * 24
             placeRunners(running: true, dt: dt, speed: 24)
             let pz = V3(0, 0, playerZ)
-            dolly(p, eye: (pz + V3(-6, 1.2, -6), pz + V3(0, 14, 10)), look: (pz + V3(0, 1.4, 0), pz + V3(0, 0, -30)),
-                  fov: (55, 70))
+            dolly(p, eye: (pz + V3(0, 1.8, 6), pz + V3(0, 10, 12)), look: (pz + V3(0, 1.4, 0), pz + V3(0, 0, -30)),
+                  fov: (55, 68))
             cameraSettings.motionBlurIntensity = 0.5
         case .forestLanding:
             edward.target = .stand
             let c = edward.head.simdWorldPosition
-            dolly(p, eye: (c + V3(1.6, 0, -2.2), c + V3(1.0, -0.1, -1.6)), look: (c, c), fov: (40, 34))
+            dolly(p, eye: (c + V3(0, 0, -2.3), c + V3(0, -0.05, -1.7)), look: (c, c), fov: (40, 34))
         case .forestDizzy:
             let c = bella.head.simdWorldPosition
-            placeCamera(eye: c + rotateY(V3(1.4, 0.3, 0.8), p * 0.4), target: c, fov: 36)
+            // Белла смотрит вдоль своего поворота — камера ровно перед ней.
+            let face = V3(sin(bella.yaw), 0, cos(bella.yaw))
+            placeCamera(eye: c + face * 1.5 + V3(0, 0.1, 0), target: c, fov: 36)
         default:
             break
         }

@@ -26,10 +26,40 @@ final class SoundFX {
     private let queue = DispatchQueue(label: "twilight.sfx")
     /// Фоны и эффекты из файлов.
     private var ambiencePlayers: [Ambience: AVAudioPlayer] = [:]
-    private var effectFiles: [Effect: Data] = [:]
-    private var activeShots: [AVAudioPlayer] = []
-    private var voicePlayer: AVAudioPlayer?
+    private var effectFiles: [Effect: URL] = [:]
+    private var voiceNode: (player: AVAudioPlayerNode, eq: AVAudioUnitEQ)?
     private var lastVoice = ""
+
+    /// Усиление файлов (дБ): AVAudioPlayer не умеет громче 100 %, поэтому — через движок с EQ.
+    private static let effectGain: Float = 5
+    private static let thunderGain: Float = 8
+    private static let edwardVoiceGain: Float = 9
+    private static let voiceGain: Float = 3
+
+    /// Проиграть файл через движок с усилением; узлы сами отключаются по окончании.
+    @discardableResult
+    private func playFile(_ url: URL, gain: Float, volume: Float) -> (player: AVAudioPlayerNode, eq: AVAudioUnitEQ)? {
+        guard let file = try? AVAudioFile(forReading: url) else { return nil }
+        if !engine.isRunning { try? engine.start() }
+        let node = AVAudioPlayerNode()
+        let eq = AVAudioUnitEQ(numberOfBands: 0)
+        eq.globalGain = gain
+        engine.attach(node)
+        engine.attach(eq)
+        engine.connect(node, to: eq, format: file.processingFormat)
+        engine.connect(eq, to: engine.mainMixerNode, format: file.processingFormat)
+        node.volume = volume
+        node.scheduleFile(file, at: nil) { [weak self] in
+            self?.queue.asyncAfter(deadline: .now() + 0.3) {
+                guard let self else { return }
+                node.stop()
+                self.engine.detach(node)
+                self.engine.detach(eq)
+            }
+        }
+        node.play()
+        return (node, eq)
+    }
 
     /// Файл из папки Audio по имени без расширения.
     static func audioURL(_ name: String) -> URL? {
@@ -53,11 +83,9 @@ final class SoundFX {
     func play(_ effect: Effect, volume: Float = 1, delay: TimeInterval = 0) {
         queue.asyncAfter(deadline: .now() + delay) { [weak self] in
             guard let self else { return }
-            if let data = self.effectFiles[effect], let p = try? AVAudioPlayer(data: data) {
-                self.activeShots.removeAll { !$0.isPlaying }
-                p.volume = volume
-                p.play()
-                self.activeShots.append(p)
+            if let url = self.effectFiles[effect] {
+                let loud = effect == .thunder || effect == .thunderNear
+                self.playFile(url, gain: loud ? Self.thunderGain : Self.effectGain, volume: volume)
                 return
             }
             guard self.running, let buffer = self.effectBuffers[effect] else { return }
@@ -92,19 +120,18 @@ final class SoundFX {
     }
 
     /// Реплика кадра кат-сцены: файл `vo_<name>`; музыка на время приглушается.
-    func voice(_ name: String) {
+    /// Голос Эдварда записан тише — ему отдельное усиление.
+    func voice(_ name: String, speaker: String? = nil) {
         queue.async { [weak self] in
             guard let self, name != self.lastVoice else { return }
             self.lastVoice = name
-            self.voicePlayer?.stop()
-            self.voicePlayer = nil
-            guard let url = Self.audioURL("vo_" + name), let p = try? AVAudioPlayer(contentsOf: url) else { return }
-            p.volume = 1
-            p.play()
-            self.voicePlayer = p
-            let length = p.duration
+            self.stopVoiceNode()
+            guard let url = Self.audioURL("vo_" + name) else { return }
+            let gain = speaker == "Эдвард" ? Self.edwardVoiceGain : Self.voiceGain
+            self.voiceNode = self.playFile(url, gain: gain, volume: 1)
+            let length = (try? AVAudioFile(forReading: url)).map { Double($0.length) / $0.processingFormat.sampleRate } ?? 2
             DispatchQueue.main.async {
-                SoundtrackPlayer.shared.duck(to: 0.18, over: 0.3)
+                SoundtrackPlayer.shared.duck(to: 0.14, over: 0.3)
                 DispatchQueue.main.asyncAfter(deadline: .now() + length + 0.2) {
                     SoundtrackPlayer.shared.unduck()
                 }
@@ -112,11 +139,16 @@ final class SoundFX {
         }
     }
 
+    private func stopVoiceNode() {
+        guard let v = voiceNode else { return }
+        v.player.stop()
+        voiceNode = nil
+    }
+
     func stopVoice() {
         queue.async { [weak self] in
-            guard let self, self.voicePlayer != nil || !self.lastVoice.isEmpty else { return }
-            self.voicePlayer?.stop()
-            self.voicePlayer = nil
+            guard let self, self.voiceNode != nil || !self.lastVoice.isEmpty else { return }
+            self.stopVoiceNode()
             self.lastVoice = ""
             DispatchQueue.main.async { SoundtrackPlayer.shared.unduck() }
         }
@@ -151,8 +183,8 @@ final class SoundFX {
             ambiencePlayers[kind] = p
         }
         for effect in Effect.allCases {
-            if let url = Self.audioURL("sfx_\(effect)"), let data = try? Data(contentsOf: url) {
-                effectFiles[effect] = data
+            if let url = Self.audioURL("sfx_\(effect)") {
+                effectFiles[effect] = url
             }
         }
         engine.mainMixerNode.outputVolume = 0.9

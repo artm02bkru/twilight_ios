@@ -163,7 +163,7 @@ final class WorldDirector: ObservableObject {
                     modeKey = key
                     stage.setCinematic(true)
                     stage.beginShot(playback.shot.cue)
-                    SoundFX.shared.voice("\(playback.shot.cue)")
+                    SoundFX.shared.voice("\(playback.shot.cue)", speaker: playback.shot.speaker)
                 }
                 stage.updateShot(playback.shot.cue, progress: Float(playback.progress), dt: fdt)
             }
