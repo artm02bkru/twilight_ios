@@ -51,13 +51,15 @@ final class WeddingStage: Stage3D {
                                             avoid: { p in abs(p.x) < 1.0 && p.z > -1 && p.z < 12 }))
         root.addChildNode(Nature.flowers(radius: 24, count: 700, seed: 42,
                                          palette: [UIColor(hex: 0xF5F2F8), UIColor(hex: 0xE9C8D8), UIColor(hex: 0xF2E3A8)]))
-        let houseModel = ModelAsset.named("cullen_house")
+        // Поляна под дом Калленов за алтарём.
+        func houseClearing(_ p: V3) -> Bool {
+            let insideX: Bool = p.x > -30 && p.x < 36
+            let insideZ: Bool = p.z > -62 && p.z < -16
+            return insideX && insideZ
+        }
+        let clearing: ((V3) -> Bool)? = ModelAsset.named("cullen_house") == nil ? nil : houseClearing
         root.addChildNode(Nature.forestRing(center: V3(0, 0, -6), inner: 30, outer: 85, count: 520, seed: 43,
-                                            heights: 18...32, broadleafShare: 0.25,
-                                            clearing: houseModel == nil ? nil : { p in
-                                                // Поляна под дом Калленов за алтарём.
-                                                p.x > -30 && p.x < 36 && p.z > -62 && p.z < -16
-                                            }))
+                                            heights: 18...32, broadleafShare: 0.25, clearing: clearing))
         buildHouse(root)
         buildChairs(root)
         buildArches(root)
@@ -149,10 +151,12 @@ final class WeddingStage: Stage3D {
         }
         if let trees = ModelAsset.named("tree_lowpoly") {
             for i in 0..<10 {
-                let a = Float(i) / 10 * Float.pi * 1.4 - Float.pi * 0.2
-                let r = rng.range(15, 21)
+                let a: Float = Float(i) * 0.44 - 0.63
+                let r: Float = rng.range(15, 21)
                 guard let t = trees.grounded(i % 2 == 0 ? "a" : "b") else { continue }
-                t.simdPosition = V3(cos(a) * r, 0, sin(a) * r * 0.7 + 4)
+                let x: Float = cos(a) * r
+                let z: Float = sin(a) * r * 0.7 + 4
+                t.simdPosition = V3(x, 0, z)
                 t.simdEulerAngles.y = rng.range(0, 6.28)
                 t.simdScale = V3(repeating: rng.range(1.6, 2.2))
                 root.addChildNode(t)
