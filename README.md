@@ -131,6 +131,25 @@
 
 ---
 
+## 3D-модели из Blender
+
+Часть объектов — готовые модели, сконвертированные из `.blend` в лёгкий формат `.tmdl`
+(папка `TwilightNight/Models`, загрузчик `World3D/Engine/ModelAsset.swift`):
+
+| Модель | Где в игре | Автор |
+|---|---|---|
+| Пикап Беллы — 1959 Chevrolet Apache | Пролог (дорога), глава 3 (парковка) | ojosamson527, CGTrader |
+| Кабинет (парты, стулья, доска, окна) | Глава 1, кабинет биологии | файл `classroomBlender.blend` |
+| Школьный микроскоп | Глава 1 | файл `Microscope.blend` |
+
+Как добавить или пересобрать модель:
+
+1. Положить `.blend` в папку `Assets3D/` (в репозиторий не коммитится, если > 25 МБ — через git CLI).
+2. `pip install bpy` (Blender 5 как модуль Python).
+3. `cd Tools/AssetPipeline && python3 -I export_tm.py -- cfg_truck.json` — конфиг задаёт оси,
+   упрощение сетки (decimate), какие объекты — отдельные части (колёса), сдвиги.
+4. Проверка: `python3 -I preview.py -- ../../TwilightNight/Models/bella_truck.tmdl out.png '[[[4.5,1.6,5.5],[0,0.8,0],35]]'`.
+
 ## Структура проекта
 
 ```

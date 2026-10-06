@@ -13,13 +13,15 @@ final class Vehicle {
     private(set) var wheels: [SCNNode] = []
     private(set) var headlights: [SCNNode] = []
     let paint: SCNMaterial
-    private let headlightMaterial: SCNMaterial
+    /// Материалы, которые светятся сильнее при включённых фарах.
+    private var lampMaterials: [SCNMaterial] = []
     private let wheelRadius: Float
 
     init(mesh: MeshData, paintColor: UIColor, wheelSpots: [V3], wheelRadius: Float,
          headlightSpots: [V3], metallic: CGFloat = 0.45) {
         paint = Materials.carPaint(paintColor, metallic: metallic)
-        headlightMaterial = Materials.pbr(UIColor(white: 1, alpha: 1), roughness: 0.05)
+        let headlightMaterial = Materials.pbr(UIColor(white: 1, alpha: 1), roughness: 0.05)
+        lampMaterials = [headlightMaterial]
         headlightMaterial.emission.contents = UIColor(red: 1, green: 0.93, blue: 0.8, alpha: 1)
         headlightMaterial.emission.intensity = 0.2
         let tail = Materials.pbr(UIColor(red: 0.5, green: 0.02, blue: 0.02, alpha: 1), roughness: 0.1)
@@ -93,6 +95,55 @@ final class Vehicle {
         }
     }
 
+    /// Машина из готовой модели: кузов — часть «body», колёса — отдельные части с осью в центре.
+    init(model: ModelAsset, paintColor: UIColor, metallic: CGFloat, wheelParts: [String],
+         headlightSpots: [V3], materials: @escaping (ModelAsset.Material) -> SCNMaterial?) {
+        let paint = Materials.carPaint(paintColor, metallic: metallic)
+        self.paint = paint
+        let lamp = Materials.pbr(UIColor(white: 0.95, alpha: 1), roughness: 0.1)
+        lamp.emission.contents = UIColor(red: 1, green: 0.93, blue: 0.8, alpha: 1)
+        lamp.emission.intensity = 0.2
+        var lamps = [lamp]
+        let pick: (ModelAsset.Material) -> SCNMaterial? = { d in
+            switch d.name {
+            case "Car Paint": return paint
+            case "Light": return lamp
+            case "Lights":
+                // Атлас фар и фонарей: светится сам по себе.
+                let m = ModelAsset.defaultMaterial(d)
+                m.emission.contents = m.diffuse.contents
+                m.emission.intensity = 0.2
+                lamps.append(m)
+                return m
+            default: return materials(d)
+            }
+        }
+        bodyNode = model.node("body", material: pick) ?? SCNNode()
+        bodyNode.castsShadow = true
+        node.addChildNode(bodyNode)
+        var radius: Float = 0.38
+        var wheelNodes: [SCNNode] = []
+        for name in wheelParts {
+            guard let wheel = model.node(name, material: pick), let part = model.parts[name] else { continue }
+            radius = (part.boundsMax.y - part.boundsMin.y) / 2
+            wheel.castsShadow = true
+            wheelNodes.append(wheel)
+        }
+        wheelRadius = radius
+        wheels = wheelNodes
+        for w in wheelNodes { node.addChildNode(w) }
+        lampMaterials = lamps
+
+        for spot in headlightSpots {
+            let light = Stage3D.spotLight(color: UIColor(red: 1, green: 0.92, blue: 0.78, alpha: 1),
+                                          intensity: 0, angle: 55, range: 45)
+            light.simdPosition = spot
+            light.simdLook(at: spot + V3(0, -0.6, 10))
+            node.addChildNode(light)
+            headlights.append(light)
+        }
+    }
+
     /// Мелочи, без которых машина выглядит игрушкой: ручки, зеркала, номера, дворники, антенна, выхлоп.
     private func addDetails(length: Float) {
         let chrome = Materials.chrome()
@@ -149,7 +200,7 @@ final class Vehicle {
 
     /// Включить фары (0...1).
     func setHeadlights(_ value: Float) {
-        headlightMaterial.emission.intensity = CGFloat(0.2 + value * 4)
+        for m in lampMaterials { m.emission.intensity = CGFloat(0.2 + value * 4) }
         for lamp in headlights { lamp.light?.intensity = CGFloat(value * 2200) }
     }
 
@@ -164,6 +215,7 @@ final class Vehicle {
 
     /// Пикап Беллы — старый «Шевроле» 50-х: круглые крылья, хром, ржаво-красный.
     static func pickup() -> Vehicle {
+        if let model = ModelAsset.named("bella_truck") { return importedPickup(model) }
         let mesh = MeshCache.mesh("veh-pickup") {
             let m = SDFModel()
             let paint = Slot.paint.rawValue, glass = Slot.glass.rawValue
@@ -215,6 +267,42 @@ final class Vehicle {
                         wheelRadius: 0.4,
                         headlightSpots: [V3(0.78, 1.1, 2.15), V3(-0.78, 1.1, 2.15)],
                         metallic: 0.2)
+        // Выцветшая краска: шероховатее, чем у новых машин.
+        v.paint.roughness.contents = 0.45
+        v.paint.clearCoatRoughness.contents = 0.25
+        return v
+    }
+
+    /// Пикап Беллы из модели «1959 Chevrolet Apache» (автор ojosamson527, CGTrader):
+    /// выцветший красный, хром, фары-атлас, надписи на шинах.
+    private static func importedPickup(_ model: ModelAsset) -> Vehicle {
+        let v = Vehicle(model: model, paintColor: UIColor(hex: 0x7A1E16), metallic: 0.2,
+                        wheelParts: ["wheelFL", "wheelFR", "wheelRL", "wheelRR"],
+                        headlightSpots: [V3(0.72, 0.97, 2.0), V3(-0.72, 0.97, 2.0)]) { d in
+            switch d.name {
+            case "Chrome": return Materials.chrome()
+            case "Chrome frosted": return Materials.pbr(UIColor(white: 0.62, alpha: 1), roughness: 0.32, metalness: 1)
+            case "Black rubber": return Materials.rubber()
+            case "Tire":
+                // Боковина с надписями: белые буквы приглушаем до серой резины.
+                let m = Materials.rubber()
+                if let file = d.texture, let img = ModelAsset.image(file) {
+                    m.diffuse.contents = img
+                    m.multiply.contents = UIColor(white: 0.32, alpha: 1)
+                }
+                return m
+            case "Glass": return Materials.tintedGlass()
+            case "Headlight Glass":
+                let m = Materials.pbr(UIColor(white: 1, alpha: 1), roughness: 0.02)
+                m.transparency = 0.18
+                m.transparencyMode = .dualLayer
+                return m
+            case "Mirror": return Materials.mirror()
+            case "Black metal": return Materials.pbr(UIColor(white: 0.05, alpha: 1), roughness: 0.45, metalness: 0.8)
+            case "WoodP": return Materials.pbr(UIColor(hex: 0x5A3E28), roughness: 0.7)
+            default: return nil
+            }
+        }
         // Выцветшая краска: шероховатее, чем у новых машин.
         v.paint.roughness.contents = 0.45
         v.paint.clearCoatRoughness.contents = 0.25

@@ -37,6 +37,7 @@
 		9DFB397205EBABAE85597932 /* Pose.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12995F3A37FF8577F7AD69D4 /* Pose.swift */; };
 		878713EC27D57708DF15084A /* MaterialKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = B743FFBD02BF780571223B25 /* MaterialKit.swift */; };
 		9E205B9B7F8E1DD95BD63714 /* Math3D.swift in Sources */ = {isa = PBXBuildFile; fileRef = A704B286D09DBD23BD9C69D1 /* Math3D.swift */; };
+		37714C31FBE656EB54C276E4 /* ModelAsset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39BC831046294AF057C726FD /* ModelAsset.swift */; };
 		40F5F0A1E30909C5BDAFC0AB /* SDFMesher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0746A3EE88E789AA39005274 /* SDFMesher.swift */; };
 		E6A72377BA7007F1AD10F868 /* Stage3D.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D0856027D0979F13FCB4461 /* Stage3D.swift */; };
 		C0BD440A461466498D142A9B /* Textures.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3476C365554E60B27CBCAB4 /* Textures.swift */; };
@@ -60,6 +61,7 @@
 		7B23E58E4B6D8E07B348A3D2 /* WeddingStage.swift in Sources */ = {isa = PBXBuildFile; fileRef = D58E1BCACE5DC781E049DC3A /* WeddingStage.swift */; };
 		621EC25CBF38E1A9521A022D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7AA918F6885447A318F1D9EA /* Assets.xcassets */; };
 		6C8A8E2ED6A5161BFB8AAB0B /* Audio in Resources */ = {isa = PBXBuildFile; fileRef = 3489DBA4EDA3DE66EDA4B4BF /* Audio */; };
+		31C930F5CF7E4D5D4231BB95 /* Models in Resources */ = {isa = PBXBuildFile; fileRef = 6C944C33291CFB258ED5C394 /* Models */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -93,6 +95,7 @@
 		12995F3A37FF8577F7AD69D4 /* Pose.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pose.swift; sourceTree = "<group>"; };
 		B743FFBD02BF780571223B25 /* MaterialKit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaterialKit.swift; sourceTree = "<group>"; };
 		A704B286D09DBD23BD9C69D1 /* Math3D.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Math3D.swift; sourceTree = "<group>"; };
+		39BC831046294AF057C726FD /* ModelAsset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelAsset.swift; sourceTree = "<group>"; };
 		0746A3EE88E789AA39005274 /* SDFMesher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDFMesher.swift; sourceTree = "<group>"; };
 		7D0856027D0979F13FCB4461 /* Stage3D.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stage3D.swift; sourceTree = "<group>"; };
 		D3476C365554E60B27CBCAB4 /* Textures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Textures.swift; sourceTree = "<group>"; };
@@ -116,6 +119,7 @@
 		D58E1BCACE5DC781E049DC3A /* WeddingStage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeddingStage.swift; sourceTree = "<group>"; };
 		7AA918F6885447A318F1D9EA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		3489DBA4EDA3DE66EDA4B4BF /* Audio */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Audio; sourceTree = "<group>"; };
+		6C944C33291CFB258ED5C394 /* Models */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Models; sourceTree = "<group>"; };
 		1A2B3C4D5E6F000000000018 /* TwilightNight.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TwilightNight.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -214,6 +218,7 @@
 			children = (
 				B743FFBD02BF780571223B25 /* MaterialKit.swift */,
 				A704B286D09DBD23BD9C69D1 /* Math3D.swift */,
+				39BC831046294AF057C726FD /* ModelAsset.swift */,
 				0746A3EE88E789AA39005274 /* SDFMesher.swift */,
 				7D0856027D0979F13FCB4461 /* Stage3D.swift */,
 				D3476C365554E60B27CBCAB4 /* Textures.swift */,
@@ -272,6 +277,7 @@
 				3489DBA4EDA3DE66EDA4B4BF /* Audio */,
 				06E5487A3ADC3DA406C01D3B /* Core */,
 				DC55D47052247BD5E67B23E3 /* Gameplay */,
+				6C944C33291CFB258ED5C394 /* Models */,
 				AB0B94FD80CB4E24BA6D81F3 /* UI */,
 				AD7C0E652567B1BA9F0DC0F1 /* World3D */,
 			);
@@ -339,6 +345,7 @@
 			files = (
 				621EC25CBF38E1A9521A022D /* Assets.xcassets in Resources */,
 				6C8A8E2ED6A5161BFB8AAB0B /* Audio in Resources */,
+				31C930F5CF7E4D5D4231BB95 /* Models in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -379,6 +386,7 @@
 				9DFB397205EBABAE85597932 /* Pose.swift in Sources */,
 				878713EC27D57708DF15084A /* MaterialKit.swift in Sources */,
 				9E205B9B7F8E1DD95BD63714 /* Math3D.swift in Sources */,
+				37714C31FBE656EB54C276E4 /* ModelAsset.swift in Sources */,
 				40F5F0A1E30909C5BDAFC0AB /* SDFMesher.swift in Sources */,
 				E6A72377BA7007F1AD10F868 /* Stage3D.swift in Sources */,
 				C0BD440A461466498D142A9B /* Textures.swift in Sources */,
